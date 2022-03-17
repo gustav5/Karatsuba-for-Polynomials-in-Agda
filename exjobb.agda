@@ -239,14 +239,7 @@ b = [ + 3 , + 4 , + 5  ]
 
 
 karatsuba' : ℕ → List ℤ → List ℤ → List ℤ
-karatsuba' n [] ys = []
-karatsuba' n xs [] = []
-karatsuba' n [ x ] [ y ] = mulPoly [ x ] [ y ]
 karatsuba' zero xs ys = mulPoly xs ys
-karatsuba' n [ x ] ys = map (x *_) ys
-karatsuba' n xs [ y ] = map (y *_) xs
-karatsuba' _ (x1 ∷ x2 ∷ []) ys = mulPoly (x1 ∷ x2 ∷ []) ys
-karatsuba' _ xs (y1 ∷ y2 ∷ []) = mulPoly xs (y1 ∷ y2 ∷ [])
 karatsuba' (suc n) xs ys = let m = ((length xs / 2) Data.Nat.⊓ (length ys / 2)) in
                   let ba = splitAt m xs in
                   let dc = splitAt m ys in
@@ -274,10 +267,6 @@ mulPoly' n (x ∷ xs) ys = addPoly (map (x *_) ys) ( +0 ∷  mulPoly' n xs ys)
 ----------------------------------
 -------------- working help functions
 
-kara_right_empty : ∀ (n : ℕ) (xs : List ℤ)
-  → karatsuba' n xs [] ≡ []
-kara_right_empty n []  = refl
-kara_right_empty n (x ∷ xs) = refl
 
 
 mulPoly_right_empty : ∀ (xs : List ℤ)
@@ -340,59 +329,13 @@ kara_zero (x ∷ xs) ys =
   ≡⟨⟩
     {!!}
 
-map_kara_right : ∀ (n : ℕ) (x : ℤ) (ys : List ℤ)
-  → map (x *_) ys ≡ karatsuba' n [ x ] ys 
-map_kara_right n x [] = refl
-map_kara_right n x (y ∷ ys) =
-  begin
-    map (x *_) (y ∷ ys)
-  ≡⟨⟩   
-    x * y ∷ map (x *_) ys
-  ≡⟨ cong ((x * y) ∷_) (map_kara_right n x ys) ⟩
-    x * y ∷ karatsuba' n [ x ] ys
-  ≡⟨⟩
-    {!!}
 
 
 
-kara_head : ∀ (n : ℕ) (x y : ℤ) (xs ys : List ℤ)
-  → x * y ∷ (karatsuba' n xs ys) ≡ karatsuba' n (x ∷ xs) (y ∷ ys) 
-kara_head n x y [] ys =
-  begin
-   x * y ∷ karatsuba' n [] ys
-  ≡⟨⟩
-    [ x * y ]
-  ≡⟨ mul-mulPoly x y ⟩
-    mulPoly [ x ] [ y ]
-  ≡⟨⟩
-    {!!}
 
 
 
-test1 : ∀ (n : ℕ) (x y : ℤ) (ys : List ℤ)
-  → karatsuba' n [ x ] (y ∷ ys) ≡ x * y ∷ karatsuba' n [ x ] ys 
-test1 n x y [] =
-  begin
-    karatsuba' n [ x ] (y ∷ [])
-  ≡⟨⟩
-    mulPoly [ x ] [ y ]
-  ≡⟨⟩
-    addPoly (map (x *_) [ y ]) ( +0 ∷  mulPoly [] [ y ])
-  ≡⟨⟩
-    addPoly ((x * y) ∷ []) (+0 ∷ [])
-  ≡⟨⟩
-    ((x * y) + +0) ∷ addPoly [] []
-  ≡⟨ cong ( _∷ addPoly [] []) (+-identityʳ (x * y)) ⟩
-    x * y ∷ addPoly [] []
-  ≡⟨⟩
-    [ x * y ]
-  ∎
   
-test1 n x y (z ∷ zs) =
-  begin
-    karatsuba' n [ x ] (y ∷ z ∷ zs)
-  ≡⟨⟩
-    {!!}
 
 
 kara_map_r : ∀ (n : ℕ) (y : ℤ) (xs : List ℤ)
@@ -408,28 +351,6 @@ kara_map_r n xs y = {!!}
 
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
   → karatsuba' n xs ys ≡ mulPoly xs ys
-ismul' n [] ys =
-  begin
-    karatsuba' n [] ys
-  ≡⟨⟩
-    []
-  ≡⟨⟩
-     mulPoly [] ys
-  ∎
-ismul' n xs [] =
-  begin
-    karatsuba' n xs []
-  ≡⟨ kara_right_empty n xs ⟩
-    []
-  ≡⟨ sym (mulPoly_right_empty xs) ⟩
-    mulPoly xs []
-  ∎
-ismul' n [ x ] [ y ] = --- added this, helped me a little bit in kara_head, but not sure if
-  begin                --- this is smart
-    karatsuba' n [ x ] [ y ]
-   ≡⟨⟩
-     mulPoly [ x ] [ y ]
-   ∎
 ismul' zero xs ys =
   begin
     karatsuba' zero xs ys
