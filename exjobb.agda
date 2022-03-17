@@ -233,6 +233,20 @@ a = [ + 1 , + 2 ]
 b : List ℤ
 b = [ + 3 , + 4 , + 5  ]
 
+
+
+if_then_else_ : {A : Set} → Bool → A → A → A
+if true then x else y = x
+if false then x else y = y
+
+
+infix 4 _≤ᵇ_
+
+_≤ᵇ_ : ℕ → ℕ → Bool
+zero ≤ᵇ n       =  true
+suc m ≤ᵇ zero   =  false
+suc m ≤ᵇ suc n  =  m ≤ᵇ n
+
 --------------------------
 --------------------------
 -- Karatsuba
@@ -240,7 +254,9 @@ b = [ + 3 , + 4 , + 5  ]
 
 karatsuba' : ℕ → List ℤ → List ℤ → List ℤ
 karatsuba' zero xs ys = mulPoly xs ys
-karatsuba' (suc n) xs ys = let m = ((length xs / 2) Data.Nat.⊓ (length ys / 2)) in
+karatsuba' (suc n) xs ys with (((length xs / 2) Data.Nat.⊓ (length ys / 2)) ≤ᵇ 2)
+...               | true = mulPoly xs ys
+...               | false = let m = ((length xs / 2) Data.Nat.⊓ (length ys / 2)) in
                   let ba = splitAt m xs in
                   let dc = splitAt m ys in
                   let ac = karatsuba' n (Pair.snd ba) (Pair.snd dc) in 
@@ -335,16 +351,6 @@ kara_zero (x ∷ xs) ys =
 
 
 
-  
-
-
-kara_map_r : ∀ (n : ℕ) (y : ℤ) (xs : List ℤ)
-  → karatsuba' n xs [ y ] ≡ map (y *_) xs
-kara_map_r n xs y = {!!}
-
-
-
-
 ---------------------------------
 -------------------  proof in progress
 
@@ -361,8 +367,6 @@ ismul' n [ x ] ys =
     karatsuba' n [ x ] ys
   ≡⟨⟩
    {!!}
-
-
 
 
 
