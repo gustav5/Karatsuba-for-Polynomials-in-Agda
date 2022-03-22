@@ -175,28 +175,41 @@ reverse′ : ∀ {A : Set} → List A → List A
 reverse′ xs = shunt xs []
 
 take : ∀ {A : Set} → ℕ → List A → List A
-take _ [] = []
-take zero _ = []
+take n [] = []
+take zero n = []
 take (suc n) (x ∷ xs) = x ∷ take n xs
 
 drop : ∀ {A : Set} → ℕ → List A → List A
-drop (suc n) (x ∷ xs) = drop n xs
-drop zero xs = xs
 drop _ [] = []
+drop zero xs = xs
+drop (suc n) (x ∷ xs) = drop n xs
+
+
   
-replicate : ∀ {A : Set} → ℕ → A → List A
-replicate zero _ = []
-replicate (suc n) x = x ∷ replicate n x
+replicate : ℕ → List ℤ
+replicate zero = []
+replicate (suc n) = +0 ∷ replicate n 
 
 
-shift_right : ℕ → List ℤ → List ℤ
-shift_right n xs = (replicate n +0) ++ xs
+
+
+shiftRight : ℕ → List ℤ → List ℤ
+shiftRight n [] = []
+shiftRight n xs = (replicate n) ++ xs
 
 addPoly : List ℤ → List ℤ → List ℤ
 addPoly [] [] = []
 addPoly xs [] = xs
 addPoly [] ys = ys
 addPoly (x ∷ xs) (y ∷ ys) = x + y ∷ addPoly xs ys 
+
+_+p_ : List ℤ → List ℤ → List ℤ
+[] +p [] = []
+xs +p [] = xs
+[] +p ys = ys
+(x ∷ xs) +p (y ∷ ys) = x + y ∷ (xs +p ys) 
+
+
 
 
 record Pair (A B : Set) : Set where
@@ -208,7 +221,9 @@ record Pair (A B : Set) : Set where
 {-# COMPILE GHC Pair = data (,) ((,)) #-}
 
 
-splitAt : ∀ {A : Set} → ℕ → List A →  Pair (List A) (List A) 
+splitAt : ℕ → List ℤ →  Pair (List ℤ) (List ℤ)
+splitAt zero xs = ( [] , xs )
+splitAt _ [] = ( [] , [] )
 splitAt n xs = ( take n xs , drop n xs ) 
 
 mulPoly : List ℤ → List ℤ → List ℤ
@@ -264,13 +279,15 @@ karatsuba' (suc n) xs ys with (((length xs / 2) Data.Nat.⊓ (length ys / 2)) �
                   let a_plus_b = addPoly (Pair.snd ba) (Pair.fst ba) in
                   let c_plus_d = addPoly (Pair.snd dc) (Pair.fst dc) in
                   let ad_plus_bc = (subPoly (subPoly (karatsuba' n a_plus_b c_plus_d) ac) bd) in
-                  addPoly (addPoly (shift_right (2 Data.Nat.* m) ac) (shift_right m ad_plus_bc)) bd
+                  addPoly (addPoly (shiftRight (2 Data.Nat.* m) ac) (shiftRight m ad_plus_bc)) bd
 
 
 karatsuba : List ℤ → List ℤ → List ℤ
 karatsuba [] ys = []
 karatsuba xs [] = []
 karatsuba xs ys = karatsuba' ((length xs) Data.Nat.⊔ (length ys)) xs ys
+
+
 
 
 mulPoly' : ℕ → List ℤ → List ℤ → List ℤ
@@ -329,44 +346,307 @@ mulPoly-map x (y ∷ ys) =
   ∎
    
 
++p_empty_r : ∀ (xs : List ℤ)
+  → xs +p [] ≡ xs
++p_empty_r []  = refl
++p_empty_r (x ∷ xs) = refl
+
++p_empty_l : ∀ (xs : List ℤ)
+  → [] +p xs ≡ xs
++p_empty_l []  = refl
++p_empty_l (x ∷ xs) = refl
+
+--repli_rec : ∀ (n : ℕ) (x : ℤ)
+--  → replicate (ℕ.suc n) ≡ x ∷ replicate n 
+--repli_rec zero = refl
+--repli_rec (ℕ.suc n) = refl
+
+--shiftRight : ℕ → List ℤ → List ℤ
+--shiftRight n xs = (replicate n) ++ xs
+
+--replicate : ℕ → List ℤ
+--replicate zero = []
+--replicate (suc n) = +0 ∷ replicate n
+
+--repli_rec : ∀ (n : ℕ) (xs : List ℤ)
+--  → replicate (ℕ.suc n) xs ≡ +0 ∷ replicate n xs 
+--repli_rec ℕ.zero xs = refl
+--repli_rec (ℕ.suc n) xs = refl
+
+--shiftRreplicateZero ∀ (xs : List ℤ)
+--  shiftRight zero xs ≡ r
+
+shiftRightZero : ∀ (xs : List ℤ)
+  → shiftRight zero xs ≡ xs
+shiftRightZero [] = refl
+shiftRightZero (x ∷ xs) = refl
+
+shiftRightEmpty : ∀ (n : ℕ)
+  → shiftRight n [] ≡ []
+shiftRightEmpty n = refl
+
+
+shiftRightReplicateZero : ∀ (xs : List ℤ)
+  → shiftRight zero xs ≡ replicate zero ++ xs
+shiftRightReplicateZero [] = refl
+shiftRightReplicateZero (x ∷ xs) = refl
+
+
+shiftRightOne : ∀ (xs : List ℤ)
+  → shiftRight (ℕ.suc zero) xs ≡ +0 ∷ xs
+shiftRightOne xs =
+  begin
+    shiftRight (ℕ.suc zero) xs
+  ≡⟨⟩
+ --   replicate (ℕ.suc zero) ++ xs 
+ -- ≡⟨⟩
+    {!!}
+
+replShiftOne : ∀ (xs : List ℤ)
+  → replicate (ℕ.suc zero) ++ xs ≡ shiftRight (ℕ.suc zero) xs
+replShiftOne xs =
+  begin
+    +0 ∷ xs
+  ≡⟨ cong (+0 ∷_) (sym (shiftRightReplicateZero xs)) ⟩
+    +0 ∷ shiftRight zero xs
+  ≡⟨⟩
+   {!!} -- shiftRight 1 xs
+  
+    
+
+shiftRight++ : ∀ (n : ℕ) (xs : List ℤ)
+  → +0 ∷ shiftRight n xs ≡ shiftRight (ℕ.suc n) xs
+shiftRight++ zero xs =
+  begin
+    +0 ∷ shiftRight zero xs
+  ≡⟨ cong (+0 ∷_) (shiftRightReplicateZero xs) ⟩
+    +0 ∷ replicate zero ++ xs
+  ≡⟨⟩
+    replicate (ℕ.suc zero) ++ xs
+  ≡⟨⟩
+   -- shiftRight (ℕ.suc zero) xs
+  -- ≡⟨⟩
+    {!!}
+
+
+
+shiftRightReplicate : ∀ (n : ℕ) (xs : List ℤ)
+  → (replicate n ) ++ xs ≡ shiftRight n xs 
+shiftRightReplicate zero xs =
+  begin
+    replicate zero ++ xs
+  ≡⟨⟩
+    xs
+  ≡⟨ sym (shiftRightZero xs) ⟩
+    shiftRight zero xs
+  ∎
+shiftRightReplicate (suc n) xs =
+  begin
+    replicate (ℕ.suc n) ++ xs
+  ≡⟨⟩
+    +0 ∷ replicate n  ++ xs
+  ≡⟨ cong (+0 ∷_) (shiftRightReplicate n xs)⟩
+    +0 ∷ shiftRight n xs
+  ≡⟨⟩
+    {!!}
+    
+    
+    
+--shiftR_repli : ∀ (n : ℕ) 
+--  → shiftRight n [] ≡ (replicate n) ++ []
+--shiftR_repli zero  = refl
+--shiftR_repli (ℕ.suc n) = refl
+
+splitAt_empty : ∀ (n : ℕ) 
+  → splitAt n [] ≡ ( take n [] , drop n [] )
+splitAt_empty zero  = refl
+splitAt_empty (ℕ.suc n) = refl
+
+splitAtZero : ∀ (xs : List ℤ)
+  → splitAt zero xs ≡ ( [] , xs ) 
+splitAtZero [] = refl
+splitAtZero xs = refl
+
+takeZero : ∀ (xs : List ℤ)
+  → take zero xs ≡ []
+takeZero [] = refl
+takeZero (x ∷ xs) = refl
+
+dropZero : ∀ (xs : List ℤ)
+  → drop zero xs ≡ xs
+dropZero [] = refl
+dropZero (x ∷ xs) = refl
+
+splitAt_n : ∀ (n : ℕ) (x : ℤ) (xs : List ℤ)
+  → splitAt (ℕ.suc n) (x ∷ xs) ≡ ( (x ∷ (take n xs)) , drop n xs ) 
+splitAt_n n x xs = refl 
+
 
 
 --------------------------
 ---------------   in progress
 
-kara_zero : ∀ (xs ys : List ℤ)
-  → karatsuba' zero xs ys ≡ mulPoly xs ys
-kara_zero [] ys = refl
-    
-
-kara_zero (x ∷ xs) ys =
+splitAtRec : ∀ (n : ℕ) (xs : List ℤ)
+  → splitAt n xs ≡ ( take n xs , drop n xs )
+splitAtRec zero (x ∷ xs) =
   begin
-    karatsuba' zero (x ∷ xs) ys
+    splitAt zero (x ∷ xs)
+  ≡⟨ splitAtZero (x ∷ xs) ⟩
+    ( [] , (x ∷ xs) ) 
   ≡⟨⟩
-    {!!}
-
-
-
-
-
-
-
----------------------------------
--------------------  proof in progress
-
-
-ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
-  → karatsuba' n xs ys ≡ mulPoly xs ys
-ismul' zero xs ys =
+    ( take zero (x ∷ xs) ,  drop zero (x ∷ xs) ) 
+  ∎
+splitAtRec (ℕ.suc zero) (x ∷ xs) = {!!}
+splitAtRec (ℕ.suc n) (x ∷ xs) =
   begin
-    karatsuba' zero xs ys
-  ≡⟨⟩
-    {!!}
-ismul' n [ x ] ys =
-  begin
-    karatsuba' n [ x ] ys
+    splitAt (ℕ.suc n) (x ∷ xs)
   ≡⟨⟩
    {!!}
 
 
+
+
+splitAtTwo : ∀ (n : ℕ) (xs : List ℤ)
+  → splitAt n xs ≡ ( take n xs , drop n xs )
+
+splitAtTwo n [] =
+  begin
+    splitAt n []
+  ≡⟨ splitAt_empty n ⟩
+   ( take n [] , drop n [] )
+  ∎
+splitAtTwo n (x ∷ xs) =
+  begin
+    splitAt n (x ∷ xs)
+  ≡⟨⟩
+    {!!}
+
+
+
+--splitAt : ℕ → List ℤ →  Pair (List ℤ) (List ℤ)
+--splitAt zero xs = ( [] , xs )
+--splitAt _ [] = ( [] , [] )
+--splitAt n xs = ( take n xs , drop n xs ) 
+
+-- shiftRight : ℕ → List ℤ → List ℤ
+-- shiftRight n xs = (replicate n +0) ++ xs
+
+--take : ∀ {A : Set} → ℕ → List A → List A
+--take _ [] = []
+--take zero _ = []
+--take (suc n) (x ∷ xs) = x ∷ take n xs
+
+--drop : ∀ {A : Set} → ℕ → List A → List A
+--drop (suc n) (x ∷ xs) = drop n xs
+--drop zero xs = xs
+--drop _ [] = []
+
+splitTakeDrop : ∀ (n : ℕ) (xs : List ℤ)
+  → splitAt (ℕ.suc n) xs ≡ ( take n xs , drop n xs ) 
+splitTakeDrop zero xs =
+  begin
+    {!!}
+--    splitAt zero xs
+--  ≡⟨ splitAtZero xs ⟩
+--    ( [] , xs )
+--  ≡⟨ cong ( _, xs ) (sym (takeZero xs))  ⟩
+--    ( take zero xs , xs )
+--  ≡⟨ cong ( take zero xs ,_ ) (sym (dropZero xs))⟩
+ --   ( take zero xs , drop zero xs )
+ -- ∎
+--splitTakeDrop (ℕ.suc n) [ x ] = {!!}
+--splitTakeDrop (ℕ.suc n) (x ∷ xs) =
+--  begin
+--    splitAt (ℕ.suc n) (x ∷ xs)
+--  ≡⟨⟩
+--    {!!}
+    
+
+
+split_p : ∀ (m : ℕ) (xs : List ℤ)
+  →  (Pair.fst (splitAt m xs)) +p (shiftRight m (Pair.snd (splitAt m xs))) ≡ xs
+split_p  zero xs =
+  begin
+    (Pair.fst (splitAt zero xs)) +p (shiftRight zero (Pair.snd (splitAt zero xs)))
+  ≡⟨ cong ( _+p (shiftRight zero (Pair.snd (splitAt zero xs)))) (cong Pair.fst (splitAtZero xs)) ⟩
+    [] +p (shiftRight zero (Pair.snd (splitAt zero xs)))
+  ≡⟨ cong ([] +p_ ) (shiftRightZero (Pair.snd (splitAt zero xs))) ⟩
+    [] +p xs
+  ≡⟨ +p_empty_l xs ⟩
+    xs
+  ∎
+  
+split_p (suc m) xs =
+  begin
+    (Pair.fst (splitAt (ℕ.suc m) xs)) +p (shiftRight (ℕ.suc m) (Pair.snd (splitAt (ℕ.suc m) xs)))
+  ≡⟨⟩
+ --   (Pair.fst ( take (ℕ.suc m) xs , drop (ℕ.suc m) xs ))  +p (shiftRight (ℕ.suc m) (Pair.snd (splitAt (ℕ.suc m) xs)))
+--  ≡⟨⟩
+    {!!}
+--    (Pair.fst (splitAt (ℕ.suc m) xs)) +p ((replicate (ℕ.suc m)) ++ (Pair.snd (splitAt (ℕ.suc m) xs)))
+--  ≡⟨⟩
+--    {!!}
+
+
+shiftRightLemma :  ∀ (m : ℕ)
+  → shiftRight m (Pair.snd ( splitAt m [])) ≡ (Pair.snd ( splitAt m []))
+shiftRightLemma m =
+  begin
+    shiftRight m (Pair.snd ( splitAt m []))
+  ≡⟨⟩
+   -- (replicate m) ++ (Pair.snd ( splitAt m []))
+ -- ≡⟨⟩
+    {!!}
+
+
+split_p_two : ∀ (m : ℕ) (xs : List ℤ)
+  →   xs ≡ (Pair.fst (splitAt m xs)) +p (shiftRight m (Pair.snd (splitAt m xs)))
+split_p_two  m [] =
+  begin
+    []
+  ≡⟨⟩
+    [] +p []
+  ≡⟨⟩
+    (Pair.fst (take m [] , drop m [])) +p []
+  ≡⟨ cong (_+p []) (cong Pair.fst (sym (splitAt_empty m))) ⟩
+    (Pair.fst ( splitAt m [])) +p []
+  ≡⟨⟩
+    (Pair.fst ( splitAt m [])) +p (Pair.snd (take m [] , drop m []))
+  ≡⟨ cong ((Pair.fst ( splitAt m [])) +p_ ) (cong  Pair.snd (sym (splitAt_empty m))) ⟩ 
+    (Pair.fst ( splitAt m [])) +p (Pair.snd ( splitAt m []))
+  ≡⟨⟩
+    {!!}
+    
+split_p_two m (x ∷ xs) = {!!}
+
+
+--replicate : ∀ {A : Set} → ℕ → A → List A
+--replicate zero _ = []
+--replicate (suc n) x = x ∷ replicate n x
+---------------------------------
+-------------------  proof in progress
+
+
+
+
+ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
+  → karatsuba' n xs ys ≡ mulPoly xs ys  
+ismul' zero xs ys = refl
+ismul' (suc n) xs ys with (((length xs / 2) Data.Nat.⊓ (length ys / 2)) ≤ᵇ 2)
+...                   | true = refl
+...                   | false =
+                         begin
+                           let m = ((length xs / 2) Data.Nat.⊓ (length ys / 2)) in
+                           let ba = splitAt m xs in
+                           let dc = splitAt m ys in
+                           let ac = karatsuba' n (Pair.snd ba) (Pair.snd dc) in 
+                           let bd = karatsuba' n (Pair.fst ba) (Pair.fst dc) in
+                           let a_plus_b = addPoly (Pair.snd ba) (Pair.fst ba) in
+                           let c_plus_d = addPoly (Pair.snd dc) (Pair.fst dc) in
+                           let ad_plus_bc = (subPoly (subPoly (karatsuba' n a_plus_b c_plus_d) ac) bd) in
+                           addPoly (addPoly (shiftRight (2 Data.Nat.* m) ac) (shiftRight m ad_plus_bc)) bd
+                         ≡⟨⟩
+                           addPoly (addPoly (shiftRight (2 Data.Nat.* m) ac) (shiftRight m ad_plus_bc)) bd
+                         ≡⟨⟩
+                           {!!}
 
