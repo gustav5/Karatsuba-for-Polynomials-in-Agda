@@ -12,9 +12,6 @@ open import Function using (_∘_)
 open import Level using (Level)
  
 
-
-
-
 -------------------------------
 -- Lists
 -------------------------------
@@ -24,8 +21,6 @@ data List (A : Set) : Set where
   _∷_ : A → List A → List A
 
 infixr 5 _∷_
-
-
 
 pattern [_] z = z ∷ []
 pattern [_,_] y z = y ∷ z ∷ []
@@ -128,35 +123,6 @@ reverse-++-distrib (x ∷ xs) ys =
     reverse ys ++ reverse (x ∷ xs)
   ∎
 
-reverse-involutive : ∀ {A : Set } (xs : List A) 
-  → reverse (reverse xs) ≡ xs 
-reverse-involutive [] =
-  begin
-    reverse (reverse [])  
-  ≡⟨⟩
-    reverse ([])
-    ≡⟨⟩
-    []
-  ∎
-reverse-involutive (x ∷ xs) =
-  begin
-    reverse (reverse (x ∷ xs))
-  ≡⟨⟩
-    reverse ( reverse xs ++ [ x ])
-  ≡⟨ reverse-++-distrib (reverse xs) [ x ] ⟩
-    reverse [ x ] ++ reverse (reverse xs)
-  ≡⟨⟩
-    reverse (x ∷ []) ++ reverse (reverse xs)
-  ≡⟨⟩
-    reverse [] ++ [ x ] ++ reverse (reverse xs)
-  ≡⟨⟩  
-    [ x ] ++ reverse (reverse xs)
-  ≡⟨ cong ( [ x ] ++_ ) (reverse-involutive xs)⟩
-    [ x ] ++ xs
-  ≡⟨⟩
-    x ∷ xs
-  ∎
-
 
 ----------------------------------
 ----------------------------------
@@ -171,9 +137,6 @@ zipWith f [] _ = []
 zipWith f _ [] = []
 zipWith f (x ∷ xs) (y ∷ ys) = f x y ∷ zipWith f xs ys
 
-reverse′ : ∀ {A : Set} → List A → List A
-reverse′ xs = shunt xs []
-
 take : ∀ {A : Set} → ℕ → List A → List A
 take n [] = []
 take zero n = []
@@ -183,15 +146,10 @@ drop : ∀ {A : Set} → ℕ → List A → List A
 drop _ [] = []
 drop zero xs = xs
 drop (suc n) (x ∷ xs) = drop n xs
-
-
   
 replicate : ℕ → List ℤ
 replicate zero = []
 replicate (suc n) = +0 ∷ replicate n 
-
-
-
 
 shiftRight : ℕ → List ℤ → List ℤ
 shiftRight n [] = []
@@ -212,11 +170,7 @@ xs +p [] = xs
 _*p_ : List ℤ → List ℤ → List ℤ
 _*p_ [] ys = []
 _*p_ xs [] = []
-_*p_ (x ∷ []) ys = (map (x *_) ys) 
 _*p_ (x ∷ xs) ys = (map (x *_) ys) +p ( +0 ∷  xs *p ys)
-
-
-
 
 record Pair (A B : Set) : Set where
   constructor _,_
@@ -237,25 +191,12 @@ mulPoly [] ys = []
 mulPoly xs [] = []
 mulPoly (x ∷ xs) ys = addPoly (map (x *_) ys) ( +0 ∷  mulPoly xs ys)
 
-
-
-
 negPoly : List ℤ → List ℤ
 negPoly [] = []
 negPoly (x ∷ xs) = (- x) ∷ negPoly xs
 
 subPoly : List ℤ → List ℤ → List ℤ
 subPoly xs ys = addPoly xs (negPoly ys)
-
-
-
-a : List ℤ
-a = [ + 1 , + 2 ]
-
-b : List ℤ
-b = [ + 3 , + 4 , + 5  ]
-
-
 
 if_then_else_ : {A : Set} → Bool → A → A → A
 if true then x else y = x
@@ -296,24 +237,9 @@ karatsuba xs [] = []
 karatsuba xs ys = karatsuba' ((length xs) Data.Nat.⊔ (length ys)) xs ys
 
 
-
-
-mulPoly' : ℕ → List ℤ → List ℤ → List ℤ
-mulPoly' n [] ys = []
-mulPoly' n xs [] = []
-mulPoly' n (x ∷ xs) ys = addPoly (map (x *_) ys) ( +0 ∷  mulPoly' n xs ys)
-
-
-
 ----------------------------------
 -------------- working help functions
 
-
-
-mulPoly_right_empty : ∀ (xs : List ℤ)
-  → mulPoly xs [] ≡ []
-mulPoly_right_empty [] = refl
-mulPoly_right_empty (x ∷ xs) = refl
 
 
 *pRightEmpty : ∀ (xs : List ℤ)
@@ -325,75 +251,20 @@ mulPoly_right_empty (x ∷ xs) = refl
   → [] *p xs ≡ []
 *pLeftEmpty []  = refl
 *pLeftEmpty (x ∷ xs) = refl
- 
 
-mul-mulPoly : ∀ (x y : ℤ)
-  → [ x * y ] ≡ mulPoly [ x ] [ y ]
-mul-mulPoly x y =
-  begin
-     x * y ∷ []
-  ≡⟨ cong ( _∷ []) ( sym (+-identityʳ (x * y))) ⟩
-    ( x * y + +0) ∷ []
-  ≡⟨⟩
-    [ x * y + +0 ]
-  ∎
-
-addPoly_empty_r : ∀ (xs : List ℤ)
-  → addPoly xs [] ≡ xs
-addPoly_empty_r []  = refl
-addPoly_empty_r (x ∷ xs) = refl
-
-
-mulPoly-map : ∀ (x : ℤ) (ys : List ℤ)
-  → mulPoly [ x ] ys ≡ map (x *_) ys
-mulPoly-map x [] = refl
-mulPoly-map x (y ∷ ys) =
-  begin
-    mulPoly [ x ] (y ∷ ys)
-  ≡⟨⟩
-    mulPoly (x ∷ []) (y ∷ ys)
-  ≡⟨⟩
-    addPoly (map (x *_) (y ∷ ys)) ( +0 ∷ mulPoly [] (y ∷ ys))
-  ≡⟨⟩
-    addPoly (x * y ∷ map (x *_) ys) [ +0 ] 
-  ≡⟨⟩
-    x * y + +0 ∷ addPoly (map (x *_) ys) []
-  ≡⟨ cong ((x * y + +0) ∷_) (addPoly_empty_r (map (x *_) ys)) ⟩
-    x * y + +0 ∷ map (x *_) ys
-  ≡⟨ cong ( _∷ map (x *_) ys) (+-identityʳ (x * y)) ⟩
-   x * y ∷ map (x *_) ys
-  ∎
-   
-
-+p_empty_r : ∀ (xs : List ℤ)
++pRightEmpty : ∀ (xs : List ℤ)
   → xs +p [] ≡ xs
-+p_empty_r []  = refl
-+p_empty_r (x ∷ xs) = refl
++pRightEmpty [] = refl
++pRightEmpty (x ∷ xs) = refl
 
-+p_empty_l : ∀ (xs : List ℤ)
++pLeftEmpty : ∀ (xs : List ℤ)
   → [] +p xs ≡ xs
-+p_empty_l []  = refl
-+p_empty_l (x ∷ xs) = refl
++pLeftEmpty []  = refl
++pLeftEmpty (x ∷ xs) = refl
 
---repli_rec : ∀ (n : ℕ) (x : ℤ)
---  → replicate (ℕ.suc n) ≡ x ∷ replicate n 
---repli_rec zero = refl
---repli_rec (ℕ.suc n) = refl
-
---shiftRight : ℕ → List ℤ → List ℤ
---shiftRight n xs = (replicate n) ++ xs
-
---replicate : ℕ → List ℤ
---replicate zero = []
---replicate (suc n) = +0 ∷ replicate n
-
---repli_rec : ∀ (n : ℕ) (xs : List ℤ)
---  → replicate (ℕ.suc n) xs ≡ +0 ∷ replicate n xs 
---repli_rec ℕ.zero xs = refl
---repli_rec (ℕ.suc n) xs = refl
-
---shiftRreplicateZero ∀ (xs : List ℤ)
---  shiftRight zero xs ≡ r
++pOne : ∀ (x y : ℤ)
+  → [ x ] +p [ y ] ≡ [ x + y ]
++pOne x y = refl
 
 shiftRightZero : ∀ (xs : List ℤ)
   → shiftRight zero xs ≡ xs
@@ -410,76 +281,10 @@ shiftRightReplicateZero : ∀ (xs : List ℤ)
 shiftRightReplicateZero [] = refl
 shiftRightReplicateZero (x ∷ xs) = refl
 
-
-shiftRightOne : ∀ (xs : List ℤ)
-  → shiftRight (ℕ.suc zero) xs ≡ +0 ∷ xs
-shiftRightOne xs =
-  begin
-    shiftRight (ℕ.suc zero) xs
-  ≡⟨⟩
- --   replicate (ℕ.suc zero) ++ xs 
- -- ≡⟨⟩
-    {!!}
-
-replShiftOne : ∀ (xs : List ℤ)
-  → replicate (ℕ.suc zero) ++ xs ≡ shiftRight (ℕ.suc zero) xs
-replShiftOne xs =
-  begin
-    +0 ∷ xs
-  ≡⟨ cong (+0 ∷_) (sym (shiftRightReplicateZero xs)) ⟩
-    +0 ∷ shiftRight zero xs
-  ≡⟨⟩
-   {!!} -- shiftRight 1 xs
-  
-    
-
-shiftRight++ : ∀ (n : ℕ) (xs : List ℤ)
-  → +0 ∷ shiftRight n xs ≡ shiftRight (ℕ.suc n) xs
-shiftRight++ zero xs =
-  begin
-    +0 ∷ shiftRight zero xs
-  ≡⟨ cong (+0 ∷_) (shiftRightReplicateZero xs) ⟩
-    +0 ∷ replicate zero ++ xs
-  ≡⟨⟩
-    replicate (ℕ.suc zero) ++ xs
-  ≡⟨⟩
-   -- shiftRight (ℕ.suc zero) xs
-  -- ≡⟨⟩
-    {!!}
-
-
-
-shiftRightReplicate : ∀ (n : ℕ) (xs : List ℤ)
-  → (replicate n ) ++ xs ≡ shiftRight n xs 
-shiftRightReplicate zero xs =
-  begin
-    replicate zero ++ xs
-  ≡⟨⟩
-    xs
-  ≡⟨ sym (shiftRightZero xs) ⟩
-    shiftRight zero xs
-  ∎
-shiftRightReplicate (suc n) xs =
-  begin
-    replicate (ℕ.suc n) ++ xs
-  ≡⟨⟩
-    +0 ∷ replicate n  ++ xs
-  ≡⟨ cong (+0 ∷_) (shiftRightReplicate n xs)⟩
-    +0 ∷ shiftRight n xs
-  ≡⟨⟩
-    {!!}
-    
-    
-    
---shiftR_repli : ∀ (n : ℕ) 
---  → shiftRight n [] ≡ (replicate n) ++ []
---shiftR_repli zero  = refl
---shiftR_repli (ℕ.suc n) = refl
-
-splitAt_empty : ∀ (n : ℕ) 
+splitAtEmpty : ∀ (n : ℕ) 
   → splitAt n [] ≡ ( take n [] , drop n [] )
-splitAt_empty zero  = refl
-splitAt_empty (ℕ.suc n) = refl
+splitAtEmpty zero  = refl
+splitAtEmpty (ℕ.suc n) = refl
 
 splitAtZero : ∀ (xs : List ℤ)
   → splitAt zero xs ≡ ( [] , xs ) 
@@ -496,202 +301,169 @@ dropZero : ∀ (xs : List ℤ)
 dropZero [] = refl
 dropZero (x ∷ xs) = refl
 
-splitAt_n : ∀ (n : ℕ) (x : ℤ) (xs : List ℤ)
+splitAt-n : ∀ (n : ℕ) (x : ℤ) (xs : List ℤ)
   → splitAt (ℕ.suc n) (x ∷ xs) ≡ ( (x ∷ (take n xs)) , drop n xs ) 
-splitAt_n n x xs = refl 
+splitAt-n n x xs = refl 
+
+
+*p-map-left-single : ∀ (x : ℤ) (ys : List ℤ)
+  → [ x ] *p ys ≡ map (x *_) ys
+*p-map-left-single x [] = refl
+*p-map-left-single x (y ∷ ys) =
+  begin
+    [ x ] *p (y ∷ ys)
+  ≡⟨⟩
+    (x ∷ []) *p (y ∷ ys)
+  ≡⟨ {!!} ⟩
+    (map (x *_) (y ∷ ys)) +p ( +0 ∷ mulPoly [] (y ∷ ys))
+  ≡⟨⟩
+    (x * y ∷ map (x *_) ys) +p [ +0 ] 
+  ≡⟨⟩
+    x * y + +0 ∷ (map (x *_) ys) +p []
+  ≡⟨ cong ((x * y + +0) ∷_) (+pRightEmpty (map (x *_) ys)) ⟩
+    x * y + +0 ∷ map (x *_) ys
+  ≡⟨ cong ( _∷ map (x *_) ys) (+-identityʳ (x * y)) ⟩
+   x * y ∷ map (x *_) ys
+  ∎
+   
+
 
 
 
 --------------------------
 ---------------   in progress
 
-splitAtRec : ∀ (n : ℕ) (xs : List ℤ)
-  → splitAt n xs ≡ ( take n xs , drop n xs )
-splitAtRec zero (x ∷ xs) =
-  begin
-    splitAt zero (x ∷ xs)
-  ≡⟨ splitAtZero (x ∷ xs) ⟩
-    ( [] , (x ∷ xs) ) 
-  ≡⟨⟩
-    ( take zero (x ∷ xs) ,  drop zero (x ∷ xs) ) 
-  ∎
-splitAtRec (ℕ.suc zero) (x ∷ xs) = {!!}
-splitAtRec (ℕ.suc n) (x ∷ xs) =
-  begin
-    splitAt (ℕ.suc n) (x ∷ xs)
-  ≡⟨⟩
-   {!!}
 
 
-
-
-splitAtTwo : ∀ (n : ℕ) (xs : List ℤ)
-  → splitAt n xs ≡ ( take n xs , drop n xs )
-
-splitAtTwo n [] =
-  begin
-    splitAt n []
-  ≡⟨ splitAt_empty n ⟩
-   ( take n [] , drop n [] )
-  ∎
-splitAtTwo n (x ∷ xs) =
-  begin
-    splitAt n (x ∷ xs)
-  ≡⟨⟩
-    {!!}
-
-
-
---splitAt : ℕ → List ℤ →  Pair (List ℤ) (List ℤ)
---splitAt zero xs = ( [] , xs )
---splitAt _ [] = ( [] , [] )
---splitAt n xs = ( take n xs , drop n xs ) 
-
--- shiftRight : ℕ → List ℤ → List ℤ
--- shiftRight n xs = (replicate n +0) ++ xs
-
---take : ∀ {A : Set} → ℕ → List A → List A
---take _ [] = []
---take zero _ = []
---take (suc n) (x ∷ xs) = x ∷ take n xs
-
---drop : ∀ {A : Set} → ℕ → List A → List A
---drop (suc n) (x ∷ xs) = drop n xs
---drop zero xs = xs
---drop _ [] = []
-
-splitTakeDrop : ∀ (n : ℕ) (xs : List ℤ)
-  → splitAt (ℕ.suc n) xs ≡ ( take n xs , drop n xs ) 
-splitTakeDrop zero xs =
-  begin
-    {!!}
---    splitAt zero xs
---  ≡⟨ splitAtZero xs ⟩
---    ( [] , xs )
---  ≡⟨ cong ( _, xs ) (sym (takeZero xs))  ⟩
---    ( take zero xs , xs )
---  ≡⟨ cong ( take zero xs ,_ ) (sym (dropZero xs))⟩
- --   ( take zero xs , drop zero xs )
- -- ∎
---splitTakeDrop (ℕ.suc n) [ x ] = {!!}
---splitTakeDrop (ℕ.suc n) (x ∷ xs) =
---  begin
---    splitAt (ℕ.suc n) (x ∷ xs)
---  ≡⟨⟩
---    {!!}
-    
-
-
-split_p : ∀ (m : ℕ) (xs : List ℤ)
-  →  (fst (splitAt m xs)) +p (shiftRight m (snd (splitAt m xs))) ≡ xs
-split_p  zero xs =
-  begin
-    (fst (splitAt zero xs)) +p (shiftRight zero (snd (splitAt zero xs)))
-  ≡⟨ cong ( _+p (shiftRight zero (snd (splitAt zero xs)))) (cong fst (splitAtZero xs)) ⟩
-    [] +p (shiftRight zero (snd (splitAt zero xs)))
-  ≡⟨ cong ([] +p_ ) (shiftRightZero (snd (splitAt zero xs))) ⟩
-    [] +p xs
-  ≡⟨ +p_empty_l xs ⟩
-    xs
-  ∎
-  
-split_p (suc m) xs =
-  begin
-    (fst (splitAt (ℕ.suc m) xs)) +p (shiftRight (ℕ.suc m) (snd (splitAt (ℕ.suc m) xs)))
-  ≡⟨⟩
- --   (fst ( take (ℕ.suc m) xs , drop (ℕ.suc m) xs ))  +p (shiftRight (ℕ.suc m) (snd (splitAt (ℕ.suc m) xs)))
---  ≡⟨⟩
-    {!!}
---    (fst (splitAt (ℕ.suc m) xs)) +p ((replicate (ℕ.suc m)) ++ (snd (splitAt (ℕ.suc m) xs)))
---  ≡⟨⟩
---    {!!}
-
-
-shiftRightLemma :  ∀ (m : ℕ)
-  → shiftRight m (snd ( splitAt m [])) ≡ (snd ( splitAt m []))
-shiftRightLemma m =
-  begin
-    shiftRight m (snd ( splitAt m []))
-  ≡⟨⟩
-   -- (replicate m) ++ (snd ( splitAt m []))
- -- ≡⟨⟩
-    {!!}
-
-
-split-p-two : ∀ (m : ℕ) (xs : List ℤ)
+split-p : ∀ (m : ℕ) (xs : List ℤ)
   →   xs ≡ (fst (splitAt m xs)) +p (shiftRight m (snd (splitAt m xs)))
-split-p-two  m [] =
+split-p  m [] =
   begin
     []
   ≡⟨⟩
     [] +p [] 
   ≡⟨⟩
     (fst (take m [] , drop m [])) +p []
-  ≡⟨ cong (_+p []) (cong fst (sym (splitAt_empty m))) ⟩
+  ≡⟨ cong (_+p []) (cong fst (sym (splitAtEmpty m))) ⟩
     (fst ( splitAt m [])) +p []
   ≡⟨⟩
     (fst ( splitAt m [])) +p (snd (take m [] , drop m []))
-  ≡⟨ cong ((fst ( splitAt m [])) +p_ ) (cong  snd (sym (splitAt_empty m))) ⟩ 
+  ≡⟨ cong ((fst ( splitAt m [])) +p_ ) (cong  snd (sym (splitAtEmpty m))) ⟩ 
     (fst ( splitAt m [])) +p (snd ( splitAt m []))
   ≡⟨⟩
     {!!}
     
-split-p-two m (x ∷ xs) = {!!}
+split-p m (x ∷ xs) = {!!}
 
 
---replicate : ∀ {A : Set} → ℕ → A → List A
---replicate zero _ = []
---replicate (suc n) x = x ∷ replicate n x
 ---------------------------------
 -------------------  proof in progress
--- +p_empty_l
--- *pLeftEmpty
 
---+p_empty_r : ∀ (xs : List ℤ)
---  → xs +p [] ≡ xs
---+p_empty_r []  = refl
---+p_empty_r (x ∷ xs) = refl
+addOne : ∀ (x : ℤ) (xs : List ℤ)
+  →  x ∷ xs ≡ [ x ] +p (+0 ∷ xs) 
+addOne x [] rewrite +-identityʳ x = refl
+addOne x (y ∷ ys) rewrite +-identityʳ x = refl
 
---+p_empty_l : ∀ (xs : List ℤ)
---  → [] +p xs ≡ xs
---+p_empty_l []  = refl
---+p_empty_l (x ∷ xs) = refl
+--(x ∷ xs) +p (y ∷ ys) ≡ [ x + y ] ∷ (xs +p ys)
+--x ∷ xs +p ys ≡ ([ x ] +p ((+0 ∷ xs) +p ys) ≡
 
---_+p_ : List ℤ → List ℤ → List ℤ
+
+
+test-lemma : ∀ (x y : ℤ) (xs ys : List ℤ)
+  → [ x + y ] +p ((+0 ∷ xs) +p (+0 ∷ ys)) ≡ (x ∷ xs) +p (y ∷ ys)
+test-lemma x y xs ys =
+  begin
+    [ x + y ] +p ((+0 ∷ xs) +p (+0 ∷ ys))
+  ≡⟨⟩
+    {!!}
+  --  ([ x ] +p [ y ]) +p ((+0 ∷ xs) +p (+0 ∷ ys))
+  --≡⟨⟩
+  --  (([ x ] +p [ y ]) +p (+0 ∷ ys)) +p (+0 ∷ xs))
+  --≡⟨⟩
+  
+--(x ∷ xs) +p (y ∷ ys) = x + y ∷ (xs +p ys)
++p-comm : ∀ (xs ys : List ℤ)
+  → xs +p ys ≡ ys +p xs
++p-comm [] ys rewrite +pLeftEmpty ys | +pRightEmpty ys = refl
++p-comm (x ∷ xs) [] = refl
++p-comm (x ∷ xs) (y ∷ ys) =
+  begin
+    x + y ∷ (xs +p ys)
+  ≡⟨ cong ((x + y) ∷_) (+p-comm xs ys) ⟩
+    x + y ∷ (ys +p xs)
+  ≡⟨ cong (_∷ (ys +p xs)) (+-comm x y) ⟩
+    y + x ∷ (ys +p xs)
+  ∎
+test-two : ∀ (x : ℤ) (xs : List ℤ)
+  → x ∷ xs ≡ [ x ] +p (+0 ∷ xs)
+test-two x [] =
+  begin
+    x ∷ []
+  ≡⟨ cong (_∷ []) (sym (+-identityʳ x)) ⟩
+    [ x + +0 ]
+  ≡⟨⟩
+    [ x ] +p [ +0 ]
+  ∎
+test-two x (y ∷ ys) rewrite +-identityʳ x = refl
 --[] +p [] = []
 --xs +p [] = xs
 --[] +p ys = ys
 --(x ∷ xs) +p (y ∷ ys) = x + y ∷ (xs +p ys) 
---
---_*p_ : List ℤ → List ℤ → List ℤ
---_*p_ [] ys = []
---_*p_ xs [] = []
---_*p_ (x ∷ xs) ys = addPoly (map (x *_) ys) ( +0 ∷  xs *p ys)
 
++p-assoc : ∀ (xs ys zs : List ℤ)
+  → ( xs +p ys ) +p zs ≡ xs +p ( ys +p zs)
++p-assoc [] ys zs =
+  begin
+    ( [] +p ys ) +p zs
+  ≡⟨ cong (_+p zs) (+pLeftEmpty ys ) ⟩
+    (ys +p zs)
+  ≡⟨ sym (+pLeftEmpty (ys +p zs)) ⟩
+    [] +p (ys +p zs)
+  ∎ 
++p-assoc (x ∷ xs) ys zs =
+  begin
+    (( x ∷ xs) +p ys) +p zs
+  ≡⟨ cong (_+p zs) (cong (_+p ys) (test-two x xs)) ⟩
+    (([ x ] +p (+0 ∷ xs)) +p ys) +p zs 
+  ≡⟨ cong (_+p zs) (+p-assoc [ x ] (+0 ∷ xs) ys ) ⟩
+    ([ x ] +p ((+0 ∷ xs) +p ys)) +p zs     
+  ≡⟨ +p-assoc [ x ] ((+0 ∷ xs) +p ys) zs ⟩
+    [ x ] +p (((+0 ∷ xs) +p ys) +p zs)
+  ≡⟨ cong ([ x ] +p_) ( +p-assoc (+0 ∷ xs) ys zs) ⟩
+    [ x ] +p ((+0 ∷ xs) +p ( ys +p zs))
+  ≡⟨ sym (+p-assoc [ x ] (+0 ∷ xs) ( ys +p zs)) ⟩
+    ([ x ] +p (+0 ∷ xs)) +p (ys +p zs)
+  ≡⟨ cong (_+p (ys +p zs)) ( sym (test-two x xs)) ⟩
+    (x ∷ xs) +p (ys +p zs)
+  ∎
 
---_++_ : ∀ {A : Set} → List A → List A → List A
---[]       ++ ys  =  ys
--- (x ∷ xs) ++ ys  =  x ∷ (xs ++ ys)
+-- +p-assoc (x ∷ xs) (y ∷ ys) zs rewrite addOne x xs | addOne y ys | +p-assoc xs ys zs ≡ refl
 
-
---*pLeftEmpty : ∀ (xs : List ℤ)
---  → [] *p xs ≡ []
---*pLeftEmpty []  = refl
---*pLeftEmpty (x ∷ xs) = refl
-
-
---+p-comm ∀ 
-
+--    [ x + y ] +p (+0 ∷ (xs +p ys)) +p zs
+--  ≡⟨ ? ⟩
+--    [ x + y ] +p ((+0 ∷ xs) +p (+0 ∷ ys)) +p zs
+--  ≡⟨ ? ⟩
+--    [ x + y ] +p ((+0 ∷ xs) +p ((+0 ∷ ys) +p zs))
+--  ≡⟨ ? ⟩
+--    [ x + y ] +p (+0 ∷ xs) +p (+0 ∷ ys) +p zs
+--  ≡⟨ ? ⟩
+--    
+--   ((x ∷ xs) +p ((y ∷ ys) +p zs))
+-- ∎
+    
 *p-map : ∀ (x y : ℤ) (xs ys : List ℤ)
   → (x ∷ xs) *p (y ∷ ys) ≡ (map (x *_) ys) +p (+0 ∷ (xs *p ys))
 *p-map x y [] ys =
   begin
-    x * y ∷ map (x *_) ys
-  ≡⟨⟩
-   map (x *_) (y ∷ ys)
-  ≡⟨ {!!} ⟩ -- plus 0
-   map (x *_) ys +p [ +0 ]
-  ∎
+    {!!}
+--    x * y ∷ map (x *_) ys
+--  ≡⟨⟩
+--   map (x *_) (y ∷ ys)
+-- ≡⟨⟩
+   {!!}
+--  ≡⟨ {!!} ⟩ -- plus 0
+--   map (x *_) ys +p [ +0 ]
+--  ∎
 
 
 *p-map x y (z ∷ zs) ys =
@@ -707,69 +479,46 @@ split-p-two m (x ∷ xs) = {!!}
    
    (map (x *_) ys +p (+0 ∷ ((z ∷ zs) *p ys)))
   ∎
+
+--addOne : ∀ (x : ℤ) (xs : List ℤ)
+--  →  x ∷ xs ≡ [ x ] +p (+0 ∷ xs) 
 *p-comm : ∀ (xs ys : List ℤ) 
   → xs *p ys ≡  ys *p xs
-*p-comm (x ∷ xs) [] = refl
-*p-comm [] ys =
+*p-comm [] ys rewrite *pRightEmpty ys = refl
+*p-comm (x ∷ xs) ys =
   begin
-    [] *p ys
-  ≡⟨ *pLeftEmpty ys ⟩
-    []
-  ≡⟨ sym (*pRightEmpty ys) ⟩
-    ys *p []
-  ∎
-*p-comm (x ∷ xs) (y ∷ ys) =
-  begin
-    ((x ∷ xs) *p (y ∷ ys))
-  ≡⟨ {!!} ⟩ -- *p-map
-    (map (x *_) (y ∷ ys)) +p ( +0 ∷  xs *p (y ∷ ys))
-  ≡⟨ cong ((map (x *_) (y ∷ ys)) +p_) (cong (+0 ∷_) (*p-comm xs (y ∷ ys))) ⟩
-    (map (x *_) (y ∷ ys)) +p ( +0 ∷  (y ∷ ys) *p xs)
-  ≡⟨ {!!} ⟩
-     x * y + +0 ∷ (map (x *_) ys +p ((y ∷ ys) *p xs))
-  ≡⟨ {!!} ⟩ --bort med +
-    x * y  ∷ ((map (x *_) ys +p ((y ∷ ys) *p xs)))
-  ≡⟨ {!!} ⟩
-    ( +0 ∷  ys *p xs) +p (map (y *_) xs)
-  ≡⟨ {!!} ⟩
-    (map (y *_) xs) +p ( +0 ∷  ys *p xs)
-  ≡⟨ {!!} ⟩
-    ((y ∷ ys) *p (x ∷ xs))
-  ∎
-  --   +0 ∷ (map (y *_) xs) +p ( +0 ∷  ys *p xs) +p (map (x *_) (y ∷ ys))
- -- ≡⟨⟩
- --    +0 ∷ (map (y *_) xs) +p ( +0 ∷  ys *p xs) +p (x + y) ∷ (map (x *_) (ys))
- -- ≡⟨⟩
- --   (map (y *_) xs
+    (x ∷ xs) *p ys
+  ≡⟨ cong (_*p ys) (addOne x xs) ⟩
+ --   ([ x ] +p (+0 ∷ xs)) *p
+ 
+    {!!}
 
- --   (x * y) +0 ∷ (map (x *_) ys) +p ( +0 ∷  (y ∷ ys) *p xs )
- -- ≡⟨⟩
- --   (y * x) ∷ (map (x *_) ys) +p ( +0 ∷  (y ∷ ys) *p xs )
- -- ≡⟨⟩
-  --  (x * ys) ∷ (map (x *_) ys  +p ( +0 ∷  (map (y *_) xs) +p ( +0 ∷  ys *p xs))
-    
-distrib : ∀ (xs ys zs : List ℤ)
+
+--_*p_ (x ∷ xs) ys = (map (x *_) ys) +p ( +0 ∷  xs *p ys)
+--(x ∷ xs) +p (y ∷ ys) ≡ [ x + y ] ∷ (xs +p ys)
+--x ∷ xs +p ys ≡ ([ x ] +p ((+0 ∷ xs) +p ys) ≡
+*p-distrib : ∀ (xs ys zs : List ℤ)
   → xs *p (ys +p zs) ≡ (xs *p ys) +p (xs *p zs)
-distrib xs [] zs =
+*p-distrib xs [] zs =
   begin
     (xs *p ([] +p zs))
-  ≡⟨ cong (xs *p_) ( +p_empty_l zs) ⟩
+  ≡⟨ cong (xs *p_) ( +pLeftEmpty zs) ⟩
     (xs *p zs)
-  ≡⟨ sym (+p_empty_l (xs *p zs)) ⟩
+  ≡⟨ sym (+pLeftEmpty (xs *p zs)) ⟩
     [] +p (xs *p zs)   
   ≡⟨ cong (_+p (xs *p zs)) (sym (*pRightEmpty xs)) ⟩
     ((xs *p []) +p (xs *p zs))
   ∎
-
-
-
-distrib xs (y ∷ ys) zs =
-  begin
-    (xs *p ((y ∷ ys) +p zs))
-  ≡⟨ {!!} ⟩
-    ((xs *p (y ∷ ys)) +p (xs *p zs))
-  ∎
-
+-- (map (x *_) ys) +p ( +0 ∷  xs *p ys)
+--*p-distrib xs (y ∷ ys) zs =
+--  begin
+--   ((x ∷ xs) *p (ys +p zs))
+--  ≡⟨ {!!} ⟩
+--   (map (x *_) ys) +p ( +0 ∷  xs *p ys)
+--  ≡⟨ ? ⟩
+ --   [x * (head y)] ∷ map (x *_) ys +p ( +0 ∷  xs *p ys)
+  --  [x * (head y)] +p (+0 ∷ map (x *_) ys) +p ( +0 ∷  xs *p ys)
+ -- ∎
 
 
 distribBig : ∀ (xs ys zs rs : List ℤ)
@@ -777,14 +526,15 @@ distribBig : ∀ (xs ys zs rs : List ℤ)
 distribBig [] ys zs rs =
   begin
     ([] +p ys) *p (zs +p rs)
-  ≡⟨ cong (_*p (zs +p rs)) (+p_empty_l ys) ⟩
+  ≡⟨ cong (_*p (zs +p rs)) (+pLeftEmpty ys) ⟩
     ys *p (zs +p rs)
-  ≡⟨ distrib ys zs rs ⟩
+  ≡⟨ *p-distrib ys zs rs ⟩
    ((ys *p zs) +p (ys *p rs))
   ≡⟨⟩
     {!!}
 
 distribBig (x ∷ xs) ys zs rs = {!!}
+
 
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
   → mulPoly xs ys ≡ karatsuba' n xs ys  
@@ -802,11 +552,10 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ 2)
                            let c_plus_d = addPoly c d in
                            let ad_plus_bc = (subPoly (subPoly (karatsuba' n a_plus_b c_plus_d) ac) bd) in
                            mulPoly xs ys
-                         ≡⟨ cong₂ mulPoly (split-p-two m xs) (split-p-two m ys) ⟩
+                         ≡⟨ cong₂ mulPoly (split-p m xs) (split-p m ys) ⟩
                            mulPoly (b +p shiftRight m a) (d +p shiftRight m c)
                          ≡⟨ {!!} ⟩
                            (((mulPoly (shiftRight m a) (shiftRight m c)) +p (mulPoly (shiftRight m c) d)) +p  (mulPoly b (shiftRight m c))) +p (mulPoly b d)
-                         ≡⟨ {!!} ⟩
+                         ≡⟨ {!!} ⟩ --- försök på den här på måndag
                            ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd ∎
                            
-
