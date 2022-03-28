@@ -536,6 +536,59 @@ distribBig [] ys zs rs =
 distribBig (x ∷ xs) ys zs rs = {!!}
 
 
+---------------- 28 / 3 (from paper, no agda)
+map-+p-distrib : ∀ {A B : Set} (f : A → B) (xs ys : List ℤ)
+  → map f xs +p map f ys ≡ map f (xs +p ys)
+map-+p-distrib f [] ys rewrite +pLeftEmpty ys = refl
+map-+p-distrib f xs [] rewrite +pRightEmpty xs = refl
+map-+p-distrib f (x ∷ xs) (y ∷ ys) =
+  begin
+    map f (x ∷ xs) +p map f (y ∷ ys)
+  ≡⟨⟩
+    ((f x) + (f y)) ∷ map f xs +p map f ys
+  ≡⟨⟩
+    
+  ≡⟨⟩
+    map f (x + y) ∷ (xs +p ys)
+    
+    
+*p-distrib : ∀ (xs ys zs : List ℤ)
+  → xs *p (ys +p zs) ≡ (xs *p ys) +p (xs *p zs)
+*p-distrib xs [] zs =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
   → mulPoly xs ys ≡ karatsuba' n xs ys  
 ismul' zero xs ys = refl
