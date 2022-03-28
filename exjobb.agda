@@ -555,7 +555,7 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ 2)
                          ≡⟨ cong₂ mulPoly (split-p m xs) (split-p m ys) ⟩
                            mulPoly (b +p shiftRight m a) (d +p shiftRight m c)
                          ≡⟨ {!!} ⟩
-                           (((mulPoly (shiftRight m a) (shiftRight m c)) +p (mulPoly (shiftRight m c) d)) +p  (mulPoly b (shiftRight m c))) +p (mulPoly b d)
+                           (((mulPoly (shiftRight m a) (shiftRight m c)) +p (mulPoly (shiftRight m a) d)) +p  (mulPoly b (shiftRight m c))) +p (mulPoly b d)
                          ≡⟨ {!!} ⟩ --- försök på den här på måndag
                            ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd ∎
                            
