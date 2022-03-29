@@ -356,32 +356,14 @@ split-p  m [] =
 split-p m (x ∷ xs) = {!!}
 
 
----------------------------------
--------------------  proof in progress
 
 addOne : ∀ (x : ℤ) (xs : List ℤ)
   →  x ∷ xs ≡ [ x ] +p (+0 ∷ xs) 
 addOne x [] rewrite +-identityʳ x = refl
 addOne x (y ∷ ys) rewrite +-identityʳ x = refl
 
---(x ∷ xs) +p (y ∷ ys) ≡ [ x + y ] ∷ (xs +p ys)
---x ∷ xs +p ys ≡ ([ x ] +p ((+0 ∷ xs) +p ys) ≡
 
 
-
-test-lemma : ∀ (x y : ℤ) (xs ys : List ℤ)
-  → [ x + y ] +p ((+0 ∷ xs) +p (+0 ∷ ys)) ≡ (x ∷ xs) +p (y ∷ ys)
-test-lemma x y xs ys =
-  begin
-    [ x + y ] +p ((+0 ∷ xs) +p (+0 ∷ ys))
-  ≡⟨⟩
-    {!!}
-  --  ([ x ] +p [ y ]) +p ((+0 ∷ xs) +p (+0 ∷ ys))
-  --≡⟨⟩
-  --  (([ x ] +p [ y ]) +p (+0 ∷ ys)) +p (+0 ∷ xs))
-  --≡⟨⟩
-  
---(x ∷ xs) +p (y ∷ ys) = x + y ∷ (xs +p ys)
 +p-comm : ∀ (xs ys : List ℤ)
   → xs +p ys ≡ ys +p xs
 +p-comm [] ys rewrite +pLeftEmpty ys | +pRightEmpty ys = refl
@@ -394,149 +376,17 @@ test-lemma x y xs ys =
   ≡⟨ cong (_∷ (ys +p xs)) (+-comm x y) ⟩
     y + x ∷ (ys +p xs)
   ∎
-test-two : ∀ (x : ℤ) (xs : List ℤ)
-  → x ∷ xs ≡ [ x ] +p (+0 ∷ xs)
-test-two x [] =
-  begin
-    x ∷ []
-  ≡⟨ cong (_∷ []) (sym (+-identityʳ x)) ⟩
-    [ x + +0 ]
-  ≡⟨⟩
-    [ x ] +p [ +0 ]
-  ∎
-test-two x (y ∷ ys) rewrite +-identityʳ x = refl
---[] +p [] = []
---xs +p [] = xs
---[] +p ys = ys
---(x ∷ xs) +p (y ∷ ys) = x + y ∷ (xs +p ys) 
-
-+p-assoc : ∀ (xs ys zs : List ℤ)
-  → ( xs +p ys ) +p zs ≡ xs +p ( ys +p zs)
-+p-assoc [] ys zs =
-  begin
-    ( [] +p ys ) +p zs
-  ≡⟨ cong (_+p zs) (+pLeftEmpty ys ) ⟩
-    (ys +p zs)
-  ≡⟨ sym (+pLeftEmpty (ys +p zs)) ⟩
-    [] +p (ys +p zs)
-  ∎ 
-+p-assoc (x ∷ xs) ys zs =
-  begin
-    (( x ∷ xs) +p ys) +p zs
-  ≡⟨ cong (_+p zs) (cong (_+p ys) (test-two x xs)) ⟩
-    (([ x ] +p (+0 ∷ xs)) +p ys) +p zs 
-  ≡⟨ cong (_+p zs) (+p-assoc [ x ] (+0 ∷ xs) ys ) ⟩
-    ([ x ] +p ((+0 ∷ xs) +p ys)) +p zs     
-  ≡⟨ +p-assoc [ x ] ((+0 ∷ xs) +p ys) zs ⟩
-    [ x ] +p (((+0 ∷ xs) +p ys) +p zs)
-  ≡⟨ cong ([ x ] +p_) ( +p-assoc (+0 ∷ xs) ys zs) ⟩
-    [ x ] +p ((+0 ∷ xs) +p ( ys +p zs))
-  ≡⟨ sym (+p-assoc [ x ] (+0 ∷ xs) ( ys +p zs)) ⟩
-    ([ x ] +p (+0 ∷ xs)) +p (ys +p zs)
-  ≡⟨ cong (_+p (ys +p zs)) ( sym (test-two x xs)) ⟩
-    (x ∷ xs) +p (ys +p zs)
-  ∎
-
--- +p-assoc (x ∷ xs) (y ∷ ys) zs rewrite addOne x xs | addOne y ys | +p-assoc xs ys zs ≡ refl
-
---    [ x + y ] +p (+0 ∷ (xs +p ys)) +p zs
---  ≡⟨ ? ⟩
---    [ x + y ] +p ((+0 ∷ xs) +p (+0 ∷ ys)) +p zs
---  ≡⟨ ? ⟩
---    [ x + y ] +p ((+0 ∷ xs) +p ((+0 ∷ ys) +p zs))
---  ≡⟨ ? ⟩
---    [ x + y ] +p (+0 ∷ xs) +p (+0 ∷ ys) +p zs
---  ≡⟨ ? ⟩
---    
---   ((x ∷ xs) +p ((y ∷ ys) +p zs))
--- ∎
-    
-*p-map : ∀ (x y : ℤ) (xs ys : List ℤ)
-  → (x ∷ xs) *p (y ∷ ys) ≡ (map (x *_) ys) +p (+0 ∷ (xs *p ys))
-*p-map x y [] ys =
-  begin
-    {!!}
---    x * y ∷ map (x *_) ys
---  ≡⟨⟩
---   map (x *_) (y ∷ ys)
--- ≡⟨⟩
-   {!!}
---  ≡⟨ {!!} ⟩ -- plus 0
---   map (x *_) ys +p [ +0 ]
---  ∎
 
 
-*p-map x y (z ∷ zs) ys =
-  begin
-    x * y + +0 ∷ (map (_*_ x) ys +p ((z ∷ zs) *p (y ∷ ys)))
-  ≡⟨ {!!} ⟩ --get rid of +0
-     x * y ∷ ((map (x *_) ys) +p ((z ∷ zs) *p (y ∷ ys)))
-  ≡⟨ {!!} ⟩ --cong (x * y ∷_) (cong ((map (x *_) ys) +p_) (*p-map z y zs ys))
-    (map (x *_) (y ∷ ys) +p (map (z *_) ys +p (+0 ∷ (zs *p ys))))
-  ≡⟨ {!!} ⟩
-    (map (x *_) (y ∷ ys) +p (((z ∷ []) *p ys) +p (+0 ∷ (zs *p ys))))
-  ≡⟨ {!!} ⟩
-   
-   (map (x *_) ys +p (+0 ∷ ((z ∷ zs) *p ys)))
-  ∎
-
---addOne : ∀ (x : ℤ) (xs : List ℤ)
---  →  x ∷ xs ≡ [ x ] +p (+0 ∷ xs) 
-*p-comm : ∀ (xs ys : List ℤ) 
-  → xs *p ys ≡  ys *p xs
-*p-comm [] ys rewrite *pRightEmpty ys = refl
-*p-comm (x ∷ xs) ys =
-  begin
-    (x ∷ xs) *p ys
-  ≡⟨ cong (_*p ys) (addOne x xs) ⟩
- --   ([ x ] +p (+0 ∷ xs)) *p
- 
-    {!!}
 
 
---_*p_ (x ∷ xs) ys = (map (x *_) ys) +p ( +0 ∷  xs *p ys)
---(x ∷ xs) +p (y ∷ ys) ≡ [ x + y ] ∷ (xs +p ys)
---x ∷ xs +p ys ≡ ([ x ] +p ((+0 ∷ xs) +p ys) ≡
-*p-distrib : ∀ (xs ys zs : List ℤ)
-  → xs *p (ys +p zs) ≡ (xs *p ys) +p (xs *p zs)
-*p-distrib xs [] zs =
-  begin
-    (xs *p ([] +p zs))
-  ≡⟨ cong (xs *p_) ( +pLeftEmpty zs) ⟩
-    (xs *p zs)
-  ≡⟨ sym (+pLeftEmpty (xs *p zs)) ⟩
-    [] +p (xs *p zs)   
-  ≡⟨ cong (_+p (xs *p zs)) (sym (*pRightEmpty xs)) ⟩
-    ((xs *p []) +p (xs *p zs))
-  ∎
--- (map (x *_) ys) +p ( +0 ∷  xs *p ys)
---*p-distrib xs (y ∷ ys) zs =
---  begin
---   ((x ∷ xs) *p (ys +p zs))
---  ≡⟨ {!!} ⟩
---   (map (x *_) ys) +p ( +0 ∷  xs *p ys)
---  ≡⟨ ? ⟩
- --   [x * (head y)] ∷ map (x *_) ys +p ( +0 ∷  xs *p ys)
-  --  [x * (head y)] +p (+0 ∷ map (x *_) ys) +p ( +0 ∷  xs *p ys)
- -- ∎
+---------------------------------
+-------------------  proof in progress
 
-
-distribBig : ∀ (xs ys zs rs : List ℤ)
-  → (xs +p ys) *p (zs +p rs) ≡ (xs *p zs) +p ((xs *p rs) +p ((ys *p zs) +p (ys *p rs)))
-distribBig [] ys zs rs =
-  begin
-    ([] +p ys) *p (zs +p rs)
-  ≡⟨ cong (_*p (zs +p rs)) (+pLeftEmpty ys) ⟩
-    ys *p (zs +p rs)
-  ≡⟨ *p-distrib ys zs rs ⟩
-   ((ys *p zs) +p (ys *p rs))
-  ≡⟨⟩
-    {!!}
-
-distribBig (x ∷ xs) ys zs rs = {!!}
 
 
 ---------------- 28 / 3 (from paper, no agda)
+
 map-+p-distrib : ∀ {A B : Set} (f : A → B) (xs ys : List ℤ)
   → map f xs +p map f ys ≡ map f (xs +p ys)
 map-+p-distrib f [] ys rewrite +pLeftEmpty ys = refl
@@ -559,33 +409,7 @@ map-+p-distrib f (x ∷ xs) (y ∷ ys) =
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 -------------------
-
-
-
-
-
-
-
-
-
-
 
 
 
