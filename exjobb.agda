@@ -402,11 +402,19 @@ map-+p-distrib f (x ∷ xs) (y ∷ ys) =
     map f (x + y) ∷ (xs +p ys)
     
     
-*p-distrib : ∀ (xs ys zs : List ℤ)
-  → xs *p (ys +p zs) ≡ (xs *p ys) +p (xs *p zs)
-*p-distrib xs [] zs =
-
-
+*p-+p-distrib : ∀ (xs ys zs : List ℤ)
+  → (xs *p ys) +p (xs *p zs) ≡ xs *p (ys +p zs)
+*p-+p-distrib [] ys zs = ...
+*p-+p-distrib xs [] zs = ...
+*p-+p-distrib xs ys [] = ...
+*p-+p-distrib (x ∷ xs) (y ∷ ys) (z ∷ zs) =
+  begin
+    ((x ∷ xs) *p (y ∷ ys)) +p ((x ∷ xs) *p (z ∷ zs))
+  ≡⟨⟩
+    map (x *_) (y ∷ ys) +p (+0 ∷ xs *p (y ∷ ys)) + ((x ∷ xs) *p (z ∷ zs))
+  ≡⟨⟩
+    
+  ≡⟨⟩
 
 
 -------------------
