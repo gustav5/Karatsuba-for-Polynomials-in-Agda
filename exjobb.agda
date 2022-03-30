@@ -417,6 +417,12 @@ map-+p-distrib f (x ∷ xs) (y ∷ ys) =
   ≡⟨⟩
 
 
+
+
+*p-shiftRight : ∀ (n : N)(xs ys : List ℤ)
+  → (shiftRight n xs) *p ys ≡ shiftRight n (xs *p ys)
+*p-shiftRight-  zero xs ys = 
+
 -------------------
 
 
