@@ -417,12 +417,23 @@ map-+p-distrib f (x ∷ xs) (y ∷ ys) =
   ≡⟨⟩
 
 
-
+------------ 30/3
 
 *p-shiftRight : ∀ (n : N)(xs ys : List ℤ)
   → (shiftRight n xs) *p ys ≡ shiftRight n (xs *p ys)
-*p-shiftRight-  zero xs ys = 
-
+*p-shiftRight zero xs ys rewrite shiftRightZero xs = refl
+*p-shiftRight (suc n) xs ys =
+  begin
+    (shiftRight (suc n) xs) *p ys
+  ≡⟨⟩
+    (+0 ∷ shiftRight n xs) *p ys
+  ≡⟨⟩
+    (map (+0 *_) ys) +p (+0 ∷ (shiftRight n xs) *p ys) 
+  ≡⟨ cong ((map (+0 *_) ys) +p_) (cong (+0 ∷_) (*p-shiftRight n xs ys)) ⟩
+    (map (+0 *_) ys) +p (+0 ∷ (shiftRight n (xs *p ys))
+  -- antar att jag har y ∷ ys
+  ≡⟨⟩
+   
 -------------------
 
 
