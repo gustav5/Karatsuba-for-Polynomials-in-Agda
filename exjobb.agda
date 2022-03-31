@@ -203,12 +203,12 @@ if true then x else y = x
 if false then x else y = y
 
 
-infix 4 _≤ᵇ_
+infix 4 _≤ᵇ'_
 
-_≤ᵇ_ : ℕ → ℕ → Bool
-zero ≤ᵇ n       =  true
-suc m ≤ᵇ zero   =  false
-suc m ≤ᵇ suc n  =  m ≤ᵇ n
+_≤ᵇ'_ : ℕ → ℕ → Bool
+zero ≤ᵇ' n       =  true
+suc m ≤ᵇ' zero   =  false
+suc m ≤ᵇ' suc n  =  m ≤ᵇ' n
 
 --------------------------
 --------------------------
@@ -217,7 +217,7 @@ suc m ≤ᵇ suc n  =  m ≤ᵇ n
 
 karatsuba' : ℕ → List ℤ → List ℤ → List ℤ
 karatsuba' zero xs ys = mulPoly xs ys
-karatsuba' (suc n) xs ys = if (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ 2)
+karatsuba' (suc n) xs ys = if (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            then (mulPoly xs ys)
                            else
                            let m = ((length xs / 2) ⊓ (length ys / 2)) in
@@ -387,53 +387,75 @@ addOne x (y ∷ ys) rewrite +-identityʳ x = refl
 
 ---------------- 28 / 3 (from paper, no agda)
 
-map-+p-distrib : ∀ {A B : Set} (f : A → B) (xs ys : List ℤ)
-  → map f xs +p map f ys ≡ map f (xs +p ys)
-map-+p-distrib f [] ys rewrite +pLeftEmpty ys = refl
-map-+p-distrib f xs [] rewrite +pRightEmpty xs = refl
-map-+p-distrib f (x ∷ xs) (y ∷ ys) =
-  begin
-    map f (x ∷ xs) +p map f (y ∷ ys)
-  ≡⟨⟩
-    ((f x) + (f y)) ∷ map f xs +p map f ys
-  ≡⟨⟩
-    
-  ≡⟨⟩
-    map f (x + y) ∷ (xs +p ys)
-    
+-- map-+p-distrib : ∀ {A B : Set} (f : A → B) (xs ys : List ℤ)
+ -- → map f xs +p map f ys ≡ map f (xs +p ys)
+--map-+p-distrib f [] ys rewrite +pLeftEmpty ys = refl
+--map-+p-distrib f xs [] rewrite +pRightEmpty xs = refl
+--map-+p-distrib f (x ∷ xs) (y ∷ ys) =
+--  begin
+--    map f (x ∷ xs) +p map f (y ∷ ys)
+--  ≡⟨⟩
+--    ((f x) + (f y)) ∷ map f xs +p map f ys
+--  ≡⟨⟩
+--    map f (x + y) ∷ (xs +p ys)
+--    ?
     
 *p-+p-distrib : ∀ (xs ys zs : List ℤ)
   → (xs *p ys) +p (xs *p zs) ≡ xs *p (ys +p zs)
-*p-+p-distrib [] ys zs = ...
-*p-+p-distrib xs [] zs = ...
-*p-+p-distrib xs ys [] = ...
+*p-+p-distrib [] ys zs = refl
+*p-+p-distrib xs [] zs =
+  begin
+    (xs *p []) +p (xs *p zs)
+  ≡⟨ cong (_+p (xs *p zs)) (*pRightEmpty xs) ⟩
+    [] +p (xs *p zs)
+  ≡⟨ +pLeftEmpty (xs *p zs) ⟩
+    xs *p  zs
+  ≡⟨ cong (xs *p_) (sym (+pLeftEmpty zs)) ⟩
+     (xs *p ([] +p zs))
+    ∎
+*p-+p-distrib xs ys [] =
+  begin
+     (xs *p ys) +p (xs *p [])
+  ≡⟨ cong ((xs *p ys) +p_) (*pRightEmpty xs) ⟩
+    (xs *p ys) +p []
+  ≡⟨ +pRightEmpty (xs *p ys) ⟩
+     xs *p  ys
+  ≡⟨ cong (xs *p_) (sym (+pRightEmpty ys)) ⟩
+     (xs *p (ys +p []))
+    ∎
 *p-+p-distrib (x ∷ xs) (y ∷ ys) (z ∷ zs) =
   begin
     ((x ∷ xs) *p (y ∷ ys)) +p ((x ∷ xs) *p (z ∷ zs))
   ≡⟨⟩
-    map (x *_) (y ∷ ys) +p (+0 ∷ xs *p (y ∷ ys)) + ((x ∷ xs) *p (z ∷ zs))
+    (map (x *_) (y ∷ ys) +p (+0 ∷ xs *p (y ∷ ys))) +p (map (x *_) (z ∷ zs) +p (+0 ∷ xs *p (z ∷ zs)))
+  ≡⟨ {!!} ⟩
+    (map (x *_) (y ∷ ys) +p map (x *_) (z ∷ zs)) +p ( (+0 ∷ xs *p (y ∷ ys)) +p (+0 ∷ xs *p (z ∷ zs)))
+  ≡⟨ {!!} ⟩
+    (map (x *_) ((y + z) ∷ (ys +p zs))) +p (+0 ∷ ( xs *p (y ∷ ys)) +p ((xs *p (z ∷ zs))))
+  ≡⟨ cong ((map (x *_) ((y + z) ∷ (ys +p zs))) +p_) (cong(+0 ∷_) (*p-+p-distrib xs (y ∷ ys) (z ∷ zs))) ⟩
+    (map (x *_) ((y + z) ∷ (ys +p zs))) +p ( +0 ∷ (xs *p ((y ∷ ys) +p  (z ∷ zs)))) 
   ≡⟨⟩
-    
+    (x ∷ xs) *p ((y + z) ∷ (ys +p zs))
   ≡⟨⟩
-
-
+    (x ∷ xs) *p ( (y ∷ ys) +p (z ∷ zs))
+  ∎
 ------------ 30/3
 
-*p-shiftRight : ∀ (n : N)(xs ys : List ℤ)
-  → (shiftRight n xs) *p ys ≡ shiftRight n (xs *p ys)
-*p-shiftRight zero xs ys rewrite shiftRightZero xs = refl
-*p-shiftRight (suc n) xs ys =
-  begin
-    (shiftRight (suc n) xs) *p ys
-  ≡⟨⟩
-    (+0 ∷ shiftRight n xs) *p ys
-  ≡⟨⟩
-    (map (+0 *_) ys) +p (+0 ∷ (shiftRight n xs) *p ys) 
-  ≡⟨ cong ((map (+0 *_) ys) +p_) (cong (+0 ∷_) (*p-shiftRight n xs ys)) ⟩
-    (map (+0 *_) ys) +p (+0 ∷ (shiftRight n (xs *p ys))
+--*p-shiftRight : ∀ (n : N)(xs ys : List ℤ)
+ -- → (shiftRight n xs) *p ys ≡ shiftRight n (xs *p ys)
+--*p-shiftRight zero xs ys rewrite shiftRightZero xs = refl
+--*p-shiftRight (suc n) xs ys =
+ -- begin
+--    (shiftRight (suc n) xs) *p ys
+--  ≡⟨⟩
+ --   (+0 ∷ shiftRight n xs) *p ys
+ -- ≡⟨⟩
+  --  (map (+0 *_) ys) +p (+0 ∷ (shiftRight n xs) *p ys) 
+ -- ≡⟨ cong ((map (+0 *_) ys) +p_) (cong (+0 ∷_) (*p-shiftRight n xs ys)) ⟩
+   -- (map (+0 *_) ys) +p (+0 ∷ (shiftRight n (xs *p ys))
   -- antar att jag har y ∷ ys
-  ≡⟨⟩
-   
+  --≡⟨⟩
+  --  ?
 -------------------
 
 
@@ -441,7 +463,7 @@ map-+p-distrib f (x ∷ xs) (y ∷ ys) =
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
   → mulPoly xs ys ≡ karatsuba' n xs ys  
 ismul' zero xs ys = refl
-ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ 2)
+ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
 ...                   | true = refl
 ...                   | false =
                          begin
