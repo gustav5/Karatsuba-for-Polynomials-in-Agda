@@ -1,7 +1,7 @@
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans; cong; cong₂; cong-app)
 open Eq.≡-Reasoning
-open import Data.Nat using (ℕ; zero; suc; _<?_; _⊓_) renaming(_*_ to _*ℕ_)
+open import Data.Nat using (ℕ; zero; suc; _<?_; _⊓_;_≤_;z≤n; s≤s) renaming(_*_ to _*ℕ_ )
 open import Data.Nat.DivMod
 open import Data.Bool using (Bool; true; false; T; _∧_; _∨_; not)
 open import Data.Integer.Base hiding (_⊓_) 
@@ -22,6 +22,7 @@ data List (A : Set) : Set where
 
 infixr 5 _∷_
 
+
 pattern [_] z = z ∷ []
 pattern [_,_] y z = y ∷ z ∷ []
 pattern [_,_,_] x y z = x ∷ y ∷ z ∷ []
@@ -29,11 +30,14 @@ pattern [_,_,_,_] w x y z = w ∷ x ∷ y ∷ z ∷ []
 pattern [_,_,_,_,_] v w x y z = v ∷ w ∷ x ∷ y ∷ z ∷ []
 pattern [_,_,_,_,_,_] u v w x y z = u ∷ v ∷ w ∷ x ∷ y ∷ z ∷ []
 
+
 infixr 5 _++_
 
 _++_ : ∀ {A : Set} → List A → List A → List A
 []       ++ ys  =  ys
 (x ∷ xs) ++ ys  =  x ∷ (xs ++ ys)
+
+
 
 ++-identityˡ : ∀ {A : Set} (xs : List A) → [] ++ xs ≡ xs
 ++-identityˡ xs =
@@ -152,8 +156,8 @@ replicate zero = []
 replicate (suc n) = +0 ∷ replicate n 
 
 shiftRight : ℕ → List ℤ → List ℤ
-shiftRight n [] = []
-shiftRight n xs = (replicate n) ++ xs
+shiftRight zero xs = xs
+shiftRight (suc n) xs = +0 ∷ shiftRight n xs
 
 addPoly : List ℤ → List ℤ → List ℤ
 addPoly [] [] = []
@@ -171,6 +175,8 @@ _*p_ : List ℤ → List ℤ → List ℤ
 _*p_ [] ys = []
 _*p_ xs [] = []
 _*p_ (x ∷ xs) ys = (map (x *_) ys) +p ( +0 ∷  xs *p ys)
+
+
 
 record Pair (A B : Set) : Set where
   constructor _,_
@@ -241,7 +247,6 @@ karatsuba xs ys = karatsuba' ((length xs) Data.Nat.⊔ (length ys)) xs ys
 -------------- working help functions
 
 
-
 *pRightEmpty : ∀ (xs : List ℤ)
   → xs *p [] ≡ []
 *pRightEmpty []  = refl
@@ -271,10 +276,10 @@ shiftRightZero : ∀ (xs : List ℤ)
 shiftRightZero [] = refl
 shiftRightZero (x ∷ xs) = refl
 
-shiftRightEmpty : ∀ (n : ℕ)
-  → shiftRight n [] ≡ []
-shiftRightEmpty n = refl
-
+--shiftRightEmpty : ∀ (xs : ℕ)
+--  → shiftRight zero xs ≡ []
+--shiftRightEmpty  = refl
+  
 
 shiftRightReplicateZero : ∀ (xs : List ℤ)
   → shiftRight zero xs ≡ replicate zero ++ xs
@@ -326,6 +331,7 @@ splitAt-n n x xs = refl
    x * y ∷ map (x *_) ys
   ∎
    
+
 
 
 
@@ -399,6 +405,125 @@ addOne x (y ∷ ys) rewrite +-identityʳ x = refl
 --  ≡⟨⟩
 --    map f (x + y) ∷ (xs +p ys)
 --    ?
+
+-- ( (+0 ∷ xs *p (y ∷ ys)) +p (+0 ∷ xs *p (z ∷ zs)))
+
+
+--*p+0 :
+--  → [ +0 ] = []
+
+
+--map-*p-+0 : ∀ (xs : List ℤ)
+--  → map (+0 *_) xs ≡  []
+--map-*p-+0 [] = refl
+--map-*p-+0 (x ∷ xs) =
+--  begin
+--    map (+0 *_) (x ∷ xs)
+--  ≡⟨⟩
+--    (+0 * x) ∷ map (+0 *_) xs
+--  ≡⟨ cong (_∷ map (+0 *_) xs) ( *-zeroˡ x) ⟩
+--    (+0) ∷ map (+0 *_) xs
+--  ≡⟨ cong (+0 ∷_) (map-*p-+0 xs) ⟩
+--    [ +0 ]
+--  ≡⟨ ⟩
+--    {!!}
+
+
+map-shiftRight-zero : ∀ (ys : List ℤ)
+  → map (+0 *_) ys ≡ shiftRight (length ys) [] 
+map-shiftRight-zero [] = refl
+map-shiftRight-zero (y ∷ ys) =
+  begin
+    map (+0 *_) (y ∷ ys)
+  ≡⟨⟩
+     (+0 * y) ∷ map (+0 *_) ys
+  ≡⟨ cong (_∷ (map (+0 *_) ys)) (*-zeroˡ y) ⟩
+ -- ≡⟨⟩
+    +0  ∷ map (+0 *_) ys
+  ≡⟨ cong (+0 ∷_) (map-shiftRight-zero ys) ⟩
+    +0 ∷  shiftRight (length ys) []
+  ∎
+
+addZero-+p : ∀ (xs : List ℤ)
+  →  shiftRight (length xs) [] +p xs ≡ xs
+addZero-+p [] = refl
+addZero-+p (x ∷ xs) =
+  begin
+    shiftRight (length (x ∷ xs)) [] +p (x ∷ xs)
+  ≡⟨⟩
+    +0 + x ∷ (shiftRight (length xs) [] +p xs)
+  ≡⟨ cong (_∷ (shiftRight (length xs) [] +p xs)) ( +-identityˡ x) ⟩
+    x ∷ (shiftRight (length xs) [] +p xs)
+  ≡⟨ cong (x ∷_) (addZero-+p xs) ⟩
+    x ∷ xs
+  ∎
+
+test : ∀ (m : ℕ) (xs : List ℤ)
+   → (m) Data.Nat.≤ (length xs)
+   →  shiftRight m [] +p xs ≡ xs
+test  m  [] = λ x →
+  begin
+    (shiftRight m [] +p [])
+  ≡⟨⟩
+    {!!}
+test m (x ∷ xs) = {!!}
+   
+
+map-zero : ∀ (ys : List ℤ)
+  → ([ +0 ] *p ys) ≡ (map (+0 *_) ys +p [ +0 ])
+map-zero (y ∷ ys) =
+  begin
+    ([ +0 ] *p (y ∷ ys)) 
+  ≡⟨⟩
+    {!!}
+
+
++0-ys : ∀ (ys : List ℤ)
+  → ( [ +0 ]  *p ys) ≡ [ +0 ]
++0-ys ys =
+  begin
+    (  (+0 ∷ [])  *p ys)
+  ≡⟨ {!!} ⟩
+    (map (+0 *_) ys) +p ( +0 ∷ [] *p ys)
+  ≡⟨⟩
+    {!!}
+
+shiftRight-zero-*p : ∀ (xs : List ℤ)
+  →  [ +0 ] *p xs ≡ shiftRight (length xs) [] 
+shiftRight-zero-*p [] = refl
+shiftRight-zero-*p (x ∷ xs) =
+  begin
+    +0 ∷ (map (_*_ +0) xs +p [])
+  ≡⟨ cong (+0 ∷_) (+pRightEmpty (map (_*_ +0) xs )) ⟩
+    +0 ∷ map (_*_ +0) xs
+  ≡⟨ cong (+0 ∷_) (map-shiftRight-zero xs)⟩
+    +0 ∷ shiftRight (length xs) []
+  ∎
+
+
+*p-zero : ∀ (xs ys : List ℤ)
+  → (map (+0 *_) ys +p (+0 ∷ (xs *p ys))) ≡ ((+0 ∷ xs) *p ys) 
+*p-zero [] ys =
+  begin
+    (map (+0 *_) ys +p [ +0 ])
+  ≡⟨ cong (_+p  [ +0 ]) (map-shiftRight-zero ys) ⟩
+    shiftRight (length ys) [] +p [ +0 ]
+  ≡⟨⟩
+    {!!}
+  --≡⟨ cong ((map (+0 *_) ys) +p_) (sym (*pRightEmpty [ +0 ])) ⟩
+  --  map (+0 *_) ys ( [ +0 ]
+
+
++0-simplified : ∀ (xs ys : List ℤ)
+  → ((+0 ∷ xs) *p ys)  ≡ +0 ∷ (xs *p ys) 
++0-simplified xs ys  =
+  begin
+     ((+0) ∷ xs) *p ys
+   ≡⟨ {!!} ⟩
+     (map (+0 *_) ys) +p (+0 ∷ (xs *p ys))
+   ≡⟨⟩
+     {!!}
+
     
 *p-+p-distrib : ∀ (xs ys zs : List ℤ)
   → (xs *p ys) +p (xs *p zs) ≡ xs *p (ys +p zs)
@@ -429,16 +554,24 @@ addOne x (y ∷ ys) rewrite +-identityʳ x = refl
   ≡⟨⟩
     (map (x *_) (y ∷ ys) +p (+0 ∷ xs *p (y ∷ ys))) +p (map (x *_) (z ∷ zs) +p (+0 ∷ xs *p (z ∷ zs)))
   ≡⟨ {!!} ⟩
-    (map (x *_) (y ∷ ys) +p map (x *_) (z ∷ zs)) +p ( (+0 ∷ xs *p (y ∷ ys)) +p (+0 ∷ xs *p (z ∷ zs)))
+    (map (x *_) (y ∷ ys) +p map (x *_) (z ∷ zs)) +p ( ((+0 ∷ xs) *p (y ∷ ys)) +p (+0 ∷ xs *p (z ∷ zs)))
   ≡⟨ {!!} ⟩
-    (map (x *_) ((y + z) ∷ (ys +p zs))) +p (+0 ∷ ( xs *p (y ∷ ys)) +p ((xs *p (z ∷ zs))))
-  ≡⟨ cong ((map (x *_) ((y + z) ∷ (ys +p zs))) +p_) (cong(+0 ∷_) (*p-+p-distrib xs (y ∷ ys) (z ∷ zs))) ⟩
-    (map (x *_) ((y + z) ∷ (ys +p zs))) +p ( +0 ∷ (xs *p ((y ∷ ys) +p  (z ∷ zs)))) 
-  ≡⟨⟩
-    (x ∷ xs) *p ((y + z) ∷ (ys +p zs))
-  ≡⟨⟩
-    (x ∷ xs) *p ( (y ∷ ys) +p (z ∷ zs))
-  ∎
+    {!!}
+ --   (map (x *_) (y ∷ ys) +p map (x *_) (z ∷ zs)) +p ( ((map (+0 *_) (y ∷ ys)) +p (+0 ∷ xs *p ys)) +p  (+0 ∷ xs *p (z ∷ zs)))
+--  ≡⟨ {!!} ⟩
+ --   ((map (x *_) (y ∷ ys) +p map (x *_) (z ∷ zs))) +p (((shiftRight (length (y ∷ ys)) []) +p (+0 ∷ xs *p ys)) +p ((shiftRight (length (z ∷ zs)) []) +p (+0 ∷ xs *p zs)))
+ -- ≡⟨ {!!} ⟩
+  {!!}
+  --  ((map (x *_) (y ∷ ys) +p map (x *_) (z ∷ zs))) +p (((shiftRight ((length (y ∷ ys))) [])) +p ((+0 ∷ xs *p ys) +p (+0 ∷ xs *p zs)))
+  --  {!!}
+    --(map (x *_) ((y + z) ∷ (ys +p zs))) +p (+0 ∷ ( xs *p (y ∷ ys)) +p ((xs *p (z ∷ zs))))
+ -- ≡⟨ cong ((map (x *_) ((y + z) ∷ (ys +p zs))) +p_) (cong(+0 ∷_) (*p-+p-distrib xs (y ∷ ys) (z ∷ zs))) ⟩
+  --  (map (x *_) ((y + z) ∷ (ys +p zs))) +p ( +0 ∷ (xs *p ((y ∷ ys) +p  (z ∷ zs)))) 
+ -- ≡⟨⟩
+  --  (x ∷ xs) *p ((y + z) ∷ (ys +p zs))
+ -- ≡⟨⟩
+  --  (x ∷ xs) *p ( (y ∷ ys) +p (z ∷ zs))
+--  ∎
 ------------ 30/3
 
 --*p-shiftRight : ∀ (n : N)(xs ys : List ℤ)
