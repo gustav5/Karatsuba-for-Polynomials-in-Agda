@@ -222,9 +222,9 @@ suc m ≤ᵇ' suc n  =  m ≤ᵇ' n
 
 
 karatsuba' : ℕ → List ℤ → List ℤ → List ℤ
-karatsuba' zero xs ys = mulPoly xs ys
+karatsuba' zero xs ys = xs *p ys
 karatsuba' (suc n) xs ys = if (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
-                           then (mulPoly xs ys)
+                           then (xs *p ys)
                            else
                            let m = ((length xs / 2) ⊓ (length ys / 2)) in
                            let (b , a) = splitAt m xs in
@@ -319,7 +319,7 @@ splitAt-n n x xs = refl
     [ x ] *p (y ∷ ys)
   ≡⟨⟩
     (x ∷ []) *p (y ∷ ys)
-  ≡⟨ {!!} ⟩
+  ≡⟨⟩
     (map (x *_) (y ∷ ys)) +p ( +0 ∷ mulPoly [] (y ∷ ys))
   ≡⟨⟩
     (x * y ∷ map (x *_) ys) +p [ +0 ] 
@@ -339,6 +339,29 @@ splitAt-n n x xs = refl
 --------------------------
 ---------------   in progress
 
+xs-take-drop : ∀  (n : ℕ) (xs : List ℤ)
+  → (take n xs) +p (shiftRight n (drop n xs)) ≡ xs
+xs-take-drop zero xs rewrite takeZero xs | dropZero xs | +pLeftEmpty xs = refl
+xs-take-drop (ℕ.suc n) (x ∷ xs) rewrite +-identityʳ x | xs-take-drop n xs = refl 
+xs-take-drop n xs = {!!}
+
+split-p-new : ∀ (m : ℕ) (xs : List ℤ)
+  → (m) Data.Nat.≤ (length xs)
+  → xs ≡ (fst (splitAt m xs)) +p (shiftRight m (snd (splitAt m xs)))
+split-p-new zero xs = λ x →
+  begin
+    xs
+  ≡⟨ sym (+pLeftEmpty xs) ⟩
+    [] +p xs
+  ∎
+split-p-new (ℕ.suc m) (y ∷ ys) = λ x →  
+  begin
+    y ∷ ys
+  ≡⟨ cong (_∷ ys) (sym (+-identityʳ y)) ⟩
+    y + +0 ∷ ys
+  ≡⟨ cong (y + +0 ∷_) ( {!!} ) ⟩
+    y + +0 ∷ (take m ys +p shiftRight m (drop m ys))
+  ∎
 
 
 split-p : ∀ (m : ℕ) (xs : List ℤ)
@@ -468,16 +491,26 @@ zeroleq m = λ x → begin
                 {!!}
 --1{!!}z≤n
 
-test : ∀ (m : ℕ) (xs : List ℤ) -- if we add list zeroes to a list, and the list of zeroes |zeroes| leq |xs|,
-   → (m) Data.Nat.≤ (length xs)    --xs will remain the same.
+addZeroes : ∀ (m : ℕ) (xs : List ℤ)       -- if we add list zeroes to a list, and the list of zeroes |zeroes| leq |xs|,
+   → (m) Data.Nat.≤ (length xs)            --xs will remain the same.
    →  shiftRight m [] +p xs ≡ xs
-test  m  [] = λ x →
+addZeroes  zero  xs = λ x →
   begin
-    (shiftRight m [] +p [])
+    [] +p xs
+   ≡⟨ +pLeftEmpty xs ⟩
+     xs
+   ∎
+ 
+addZeroes (ℕ.suc m) (y ∷ ys) = λ x →
+  begin
+    ((+0 ∷ shiftRight m []) +p (y ∷ ys))
   ≡⟨⟩
-    {!!}
-test m (x ∷ xs) = {!!}
-   
+    +0 + y ∷ (shiftRight m [] +p ys)
+  ≡⟨ cong (_∷ (shiftRight m [] +p ys)) (+-identityˡ y) ⟩
+    y ∷ (shiftRight m [] +p ys)
+  ≡⟨ cong (y ∷_) ( {!!} ) ⟩
+    y ∷ ys
+  ∎
 
 map-zero : ∀ (m : ℕ) (ys : List ℤ) 
   → ((shiftRight m []) *p ys) ≡ (map (+0 *_) ys +p [ +0 ])
@@ -564,8 +597,47 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
   ∎
 
 
+*p-lemma : ∀ (x : ℤ) (xs ys : List ℤ)
+  → (x ∷ xs) *p ys ≡ (map (x *_) ys) +p ( +0 ∷  xs *p ys)
+*p-lemma x [] ys =
+  begin
+    [ x ] *p ys
+  ≡⟨ *p-map-left-single x ys ⟩  
+    map (x *_) ys
+ --≡⟨ sym (addZeroes 1 (map (x *_) ys)) ⟩
+ ≡⟨ {!!} ⟩
+    (shiftRight 1 []) +p (map (x *_) ys) 
+  ≡⟨⟩
+    {!!}
 
 
+*p-comm : ∀ (xs ys : List ℤ)
+  → xs *p ys ≡ ys *p xs
+*p-comm [] ys rewrite *pRightEmpty ys = refl
+*p-comm xs [] rewrite *pRightEmpty xs = refl
+*p-comm (x ∷ xs) ys = 
+  begin
+    (x ∷ xs) *p ys
+  ≡⟨⟩
+    {!!}
+ --   (map (x *_) (y ∷ ys)) +p ( +0 ∷  xs *p (y ∷ ys))
+ -- ≡⟨ cong ((map (x *_) (y ∷ ys)) +p_) (cong (+0 ∷_) (*p-comm xs (y ∷ ys))) ⟩
+   -- (map (x *_) (y ∷ ys)) +p ( +0 ∷  ((y ∷ ys) *p xs))
+  --≡⟨⟩
+   -- (map (x *_) (y ∷ ys)) +p ( +0 ∷ (map (y *_) ys) +p ( +0 ∷  ys *p xs))
+ -- ≡⟨⟩
+  --   x * y + +0 ∷ (map (x *_) ys +p ((y ∷ ys) *p xs))
+--  ≡⟨⟩
+ --    x * y + +0 ∷ ((map (x *_) ys) +p  ((map (y *_) xs) +p ( +0 ∷  (ys *p xs))))
+--  ≡⟨⟩
+--    ?
+
+*p-+p-distrib-four : ∀ (xs ys zs rs : List ℤ)
+  → ((xs +p ys) *p (zs +p rs)) ≡ ((((xs *p zs) +p (xs *p rs)) +p (ys *p zs)) +p (ys *p rs))
+*p-+p-distrib-four [] ys zs rs rewrite +pLeftEmpty ys | sym ( *p-+p-distrib ys zs rs) | +pLeftEmpty (ys *p zs) = refl
+*p-+p-distrib-four xs [] zs rs rewrite +pRightEmpty xs | sym (*p-+p-distrib xs zs rs) | +pRightEmpty ((xs *p zs) +p (xs *p rs)) | +pRightEmpty  ((xs *p zs) +p (xs *p rs)) = refl 
+*p-+p-distrib-four xs ys [] rs rewrite sym (*p-+p-distrib (xs +p ys) [] rs) = {!!} 
+*p-+p-distrib-four xs ys zs rs = {!!}
 
 
  --   (map (x *_) (y ∷ ys) +p map (x *_) (z ∷ zs)) +p ( ((map (+0 *_) (y ∷ ys)) +p (+0 ∷ xs *p ys)) +p  (+0 ∷ xs *p (z ∷ zs)))
@@ -605,7 +677,7 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
 
 
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
-  → mulPoly xs ys ≡ karatsuba' n xs ys  
+  → xs *p ys ≡ karatsuba' n xs ys  
 ismul' zero xs ys = refl
 ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
 ...                   | true = refl
@@ -619,11 +691,13 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            let a_plus_b = addPoly a b in
                            let c_plus_d = addPoly c d in
                            let ad_plus_bc = (subPoly (subPoly (karatsuba' n a_plus_b c_plus_d) ac) bd) in
-                           mulPoly xs ys
-                         ≡⟨ cong₂ mulPoly (split-p m xs) (split-p m ys) ⟩
-                           mulPoly (b +p shiftRight m a) (d +p shiftRight m c)
-                         ≡⟨ {!!} ⟩
-                           (((mulPoly (shiftRight m a) (shiftRight m c)) +p (mulPoly (shiftRight m a) d)) +p  (mulPoly b (shiftRight m c))) +p (mulPoly b d)
+                           xs *p ys
+                         ≡⟨ cong₂ (_*p_) (split-p m xs) (split-p m ys) ⟩
+                           (b +p shiftRight m a) *p (d +p shiftRight m c)
+                       
+                         ≡⟨ *p-+p-distrib-four  b (shiftRight m a) d (shiftRight m c) ⟩ -- fixa
+                          (((b *p d) +p (b *p (shiftRight m c))) +p ((shiftRight m a) *p d)) +p (shiftRight m a *p shiftRight m c)
+                          --((((shiftRight m a) *p (shiftRight m c)) +p ((shiftRight m a) *p d)) +p  (b *p (shiftRight m c))) +p (b *p d)
                          ≡⟨ {!!} ⟩ --- försök på den här på måndag
                            ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd ∎
                            
