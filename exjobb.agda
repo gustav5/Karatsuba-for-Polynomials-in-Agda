@@ -177,6 +177,17 @@ _*p_ xs [] = []
 _*p_ (x ∷ xs) ys = (map (x *_) ys) +p ( +0 ∷  xs *p ys)
 
 
+negPoly : List ℤ → List ℤ
+negPoly [] = []
+negPoly (x ∷ xs) = (- x) ∷ negPoly xs
+
+
+
+_-p_ : List ℤ → List ℤ → List ℤ
+_-p_ xs ys = xs +p (negPoly ys)
+
+subPoly : List ℤ → List ℤ → List ℤ
+subPoly xs ys = addPoly xs (negPoly ys)
 
 record Pair (A B : Set) : Set where
   constructor _,_
@@ -197,12 +208,7 @@ mulPoly [] ys = []
 mulPoly xs [] = []
 mulPoly (x ∷ xs) ys = addPoly (map (x *_) ys) ( +0 ∷  mulPoly xs ys)
 
-negPoly : List ℤ → List ℤ
-negPoly [] = []
-negPoly (x ∷ xs) = (- x) ∷ negPoly xs
 
-subPoly : List ℤ → List ℤ → List ℤ
-subPoly xs ys = addPoly xs (negPoly ys)
 
 if_then_else_ : {A : Set} → Bool → A → A → A
 if true then x else y = x
@@ -275,12 +281,7 @@ shiftRightZero : ∀ (xs : List ℤ)
   → shiftRight zero xs ≡ xs
 shiftRightZero [] = refl
 shiftRightZero (x ∷ xs) = refl
-
---shiftRightEmpty : ∀ (xs : ℕ)
---  → shiftRight zero xs ≡ []
---shiftRightEmpty  = refl
   
-
 shiftRightReplicateZero : ∀ (xs : List ℤ)
   → shiftRight zero xs ≡ replicate zero ++ xs
 shiftRightReplicateZero [] = refl
@@ -332,10 +333,17 @@ splitAt-n n x xs = refl
   ∎
    
 
-
-
-
-
+negPoly-lemma : ∀ (xs : List ℤ)
+  → xs +p (negPoly xs) ≡ shiftRight (length xs) []
+negPoly-lemma [] = refl
+negPoly-lemma (x ∷ xs) =
+  begin
+    x + - x ∷ (xs +p negPoly xs)
+  ≡⟨ {!!} ⟩
+    +0 ∷ (xs +p negPoly xs)
+  ≡⟨ cong (+0 ∷_) (negPoly-lemma xs) ⟩
+    +0 ∷ shiftRight (length xs) []
+  ∎
 --------------------------
 ---------------   in progress
 
@@ -407,15 +415,80 @@ addOne x (y ∷ ys) rewrite +-identityʳ x = refl
   ∎
 
 
+map-shiftRight-zero : ∀ (ys : List ℤ)
+  → map (+0 *_) ys ≡ shiftRight (length ys) [] 
+map-shiftRight-zero [] = refl
+map-shiftRight-zero (y ∷ ys) =
+  begin
+    map (+0 *_) (y ∷ ys)
+  ≡⟨⟩
+     (+0 * y) ∷ map (+0 *_) ys
+  ≡⟨ cong (_∷ (map (+0 *_) ys)) (*-zeroˡ y) ⟩
+    +0  ∷ map (+0 *_) ys
+  ≡⟨ cong (+0 ∷_) (map-shiftRight-zero ys) ⟩
+    +0 ∷  shiftRight (length ys) []
+  ∎
 
 
 ---------------------------------
 -------------------  proof in progress
+addZeroes : ∀ (m : ℕ) (xs : List ℤ)       -- if we add list zeroes to a list, and the list of zeroes |zeroes| leq |xs|,
+   → (m) Data.Nat.≤ (length xs)            --xs will remain the same.
+   →  shiftRight m [] +p xs ≡ xs
+addZeroes  zero  xs = λ x →
+  begin
+    [] +p xs
+   ≡⟨ +pLeftEmpty xs ⟩
+     xs
+   ∎
+ 
+addZeroes (ℕ.suc m) (y ∷ ys) = λ x →
+  begin
+    ((+0 ∷ shiftRight m []) +p (y ∷ ys))
+  ≡⟨⟩
+    +0 + y ∷ (shiftRight m [] +p ys)
+  ≡⟨ cong (_∷ (shiftRight m [] +p ys)) (+-identityˡ y) ⟩
+    y ∷ (shiftRight m [] +p ys)
+  ≡⟨ cong (y ∷_) ( {!!} ) ⟩ -- help Max
+    y ∷ ys
+  ∎
+-- should I do this?
+
+{-
+break-out : ∀ (xs ys : List ℤ) -- xs and ys cant be empty
+  →  +0 ∷ (xs *p ys) ≡ (+0 ∷ xs) *p ys 
+break-out (x ∷ xs) (y ∷ ys) =
+  begin
+    +0 ∷ (map (_*_ x) (y ∷ ys) +p (+0 ∷ xs *p (y ∷ ys)))
+  ≡⟨⟩ --+-identityʳ (x * y) |   
+    +0 ∷ x * y + +0 ∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))
+  ≡⟨⟩
+    +0 ∷ x * y ∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))
+  ≡⟨ ? ⟩
+    +0 ∷ x * y ∷ (map (_*_ x) ys +p ((map (y *_) xs) +p ( +0 ∷  ys *p xs)))
+  ≡⟨⟩
+    ?
+-}
 
 
 
----------------- 28 / 3 (from paper, no agda)
-
+shiftRight-two-m : ∀ (m : ℕ) (xs ys : List ℤ)
+  → shiftRight m xs *p shiftRight m ys ≡ shiftRight (2 Data.Nat.* m) (xs *p ys)
+shiftRight-two-m zero xs ys = refl
+shiftRight-two-m (ℕ.suc m) xs ys =
+  begin
+    (+0 ∷ shiftRight m xs) *p (+0 ∷ shiftRight m ys)
+  ≡⟨⟩
+     +0 ∷ (map (+0 *_) (shiftRight m ys) +p (shiftRight m xs *p (+0 ∷ shiftRight m ys)))
+  ≡⟨ {!!} ⟩
+    +0 ∷ (map (+0 *_) (shiftRight m ys) +p (+0 ∷ (shiftRight m xs *p shiftRight m ys)))
+  ≡⟨ cong (+0 ∷_) (cong ((map (+0 *_) (shiftRight m ys)) +p_) (cong (+0 ∷_) (shiftRight-two-m m xs ys))) ⟩
+     +0 ∷ (map (+0 *_) (shiftRight m ys) +p (+0 ∷ shiftRight (m Data.Nat.+ (m Data.Nat.+ zero)) (xs *p ys)))
+  ≡⟨ cong (+0 ∷_) (cong (_+p (+0 ∷ shiftRight (m Data.Nat.+ (m Data.Nat.+ zero)) (xs *p ys)))  (map-shiftRight-zero (shiftRight m ys) ))  ⟩
+    +0 ∷ (shiftRight (length (shiftRight m ys)) [] +p (+0 ∷ shiftRight (2 Data.Nat.* m) (xs *p ys)))
+  ≡⟨ cong (+0 ∷_) ({!!} ) ⟩    --(length (shiftRight m ys)) = m + length ys
+    {!!}
+    
 +p-assoc : ∀ (xs ys zs : List ℤ)
   → (xs +p ys) +p zs ≡ xs +p (ys +p zs)
 +p-assoc [] ys zs rewrite +pLeftEmpty ys | +pLeftEmpty (ys +p zs) = refl
@@ -453,19 +526,6 @@ map-+p-distrib x (y ∷ ys) (z ∷ zs) =
 
 
 
-map-shiftRight-zero : ∀ (ys : List ℤ)
-  → map (+0 *_) ys ≡ shiftRight (length ys) [] 
-map-shiftRight-zero [] = refl
-map-shiftRight-zero (y ∷ ys) =
-  begin
-    map (+0 *_) (y ∷ ys)
-  ≡⟨⟩
-     (+0 * y) ∷ map (+0 *_) ys
-  ≡⟨ cong (_∷ (map (+0 *_) ys)) (*-zeroˡ y) ⟩
-    +0  ∷ map (+0 *_) ys
-  ≡⟨ cong (+0 ∷_) (map-shiftRight-zero ys) ⟩
-    +0 ∷  shiftRight (length ys) []
-  ∎
 
 addZero-+p : ∀ (xs : List ℤ) -- got a more general case below.
   →  shiftRight (length xs) [] +p xs ≡ xs
@@ -491,26 +551,6 @@ zeroleq m = λ x → begin
                 {!!}
 --1{!!}z≤n
 
-addZeroes : ∀ (m : ℕ) (xs : List ℤ)       -- if we add list zeroes to a list, and the list of zeroes |zeroes| leq |xs|,
-   → (m) Data.Nat.≤ (length xs)            --xs will remain the same.
-   →  shiftRight m [] +p xs ≡ xs
-addZeroes  zero  xs = λ x →
-  begin
-    [] +p xs
-   ≡⟨ +pLeftEmpty xs ⟩
-     xs
-   ∎
- 
-addZeroes (ℕ.suc m) (y ∷ ys) = λ x →
-  begin
-    ((+0 ∷ shiftRight m []) +p (y ∷ ys))
-  ≡⟨⟩
-    +0 + y ∷ (shiftRight m [] +p ys)
-  ≡⟨ cong (_∷ (shiftRight m [] +p ys)) (+-identityˡ y) ⟩
-    y ∷ (shiftRight m [] +p ys)
-  ≡⟨ cong (y ∷_) ( {!!} ) ⟩
-    y ∷ ys
-  ∎
 
 map-zero : ∀ (m : ℕ) (ys : List ℤ) 
   → ((shiftRight m []) *p ys) ≡ (map (+0 *_) ys +p [ +0 ])
@@ -640,6 +680,10 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
 *p-+p-distrib-four xs ys zs rs = {!!}
 
 
+
+
+
+
  --   (map (x *_) (y ∷ ys) +p map (x *_) (z ∷ zs)) +p ( ((map (+0 *_) (y ∷ ys)) +p (+0 ∷ xs *p ys)) +p  (+0 ∷ xs *p (z ∷ zs)))
 --  ≡⟨ {!!} ⟩
  --   ((map (x *_) (y ∷ ys) +p map (x *_) (z ∷ zs))) +p (((shiftRight (length (y ∷ ys)) []) +p (+0 ∷ xs *p ys)) +p ((shiftRight (length (z ∷ zs)) []) +p (+0 ∷ xs *p zs)))
@@ -674,6 +718,9 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
   --  ?
 -------------------
 
+ad+bc : ∀ (xs ys zs rs : List ℤ)
+  → (((xs +p ys) *p (zs +p rs)) -p (xs *p zs)) -p (ys *p rs) ≡ (xs *p rs) +p (ys *p zs)
+ad+bc [] ys zs rs rewrite +pLeftEmpty ys | +pRightEmpty (ys *p (zs +p rs)) | sym (*p-+p-distrib  ys zs rs) | +p-assoc (ys *p zs) (ys *p rs) (negPoly (ys *p rs))  = ? --| negPoly-lemma ys zs = ?   
 
 
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
@@ -695,9 +742,14 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                          ≡⟨ cong₂ (_*p_) (split-p m xs) (split-p m ys) ⟩
                            (b +p shiftRight m a) *p (d +p shiftRight m c)
                        
-                         ≡⟨ *p-+p-distrib-four  b (shiftRight m a) d (shiftRight m c) ⟩ -- fixa
+                         ≡⟨ *p-+p-distrib-four  b (shiftRight m a) d (shiftRight m c) ⟩ 
                           (((b *p d) +p (b *p (shiftRight m c))) +p ((shiftRight m a) *p d)) +p (shiftRight m a *p shiftRight m c)
+                         ≡⟨ cong (_+p (shiftRight m a *p shiftRight m c)) (+p-assoc (b *p d) (b *p (shiftRight m c)) ((shiftRight m a) *p d) ) ⟩
+                          ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
+
                           --((((shiftRight m a) *p (shiftRight m c)) +p ((shiftRight m a) *p d)) +p  (b *p (shiftRight m c))) +p (b *p d)
-                         ≡⟨ {!!} ⟩ --- försök på den här på måndag
+                         ≡⟨ cong (((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p_) (shiftRight-two-m m a c) ⟩ 
+                           ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p ((shiftRight (2 *ℕ m) (a *p c)))
+                         ≡⟨ {!!} ⟩
                            ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd ∎
                            
