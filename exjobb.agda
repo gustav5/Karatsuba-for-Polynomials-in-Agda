@@ -26,10 +26,6 @@ infixr 5 _∷_
 pattern [_] z = z ∷ []
 pattern [_,_] y z = y ∷ z ∷ []
 pattern [_,_,_] x y z = x ∷ y ∷ z ∷ []
-pattern [_,_,_,_] w x y z = w ∷ x ∷ y ∷ z ∷ []
-pattern [_,_,_,_,_] v w x y z = v ∷ w ∷ x ∷ y ∷ z ∷ []
-pattern [_,_,_,_,_,_] u v w x y z = u ∷ v ∷ w ∷ x ∷ y ∷ z ∷ []
-
 
 infixr 5 _++_
 
@@ -38,99 +34,12 @@ _++_ : ∀ {A : Set} → List A → List A → List A
 (x ∷ xs) ++ ys  =  x ∷ (xs ++ ys)
 
 
-
-++-identityˡ : ∀ {A : Set} (xs : List A) → [] ++ xs ≡ xs
-++-identityˡ xs =
-  begin
-    [] ++ xs
-  ≡⟨⟩
-    xs
-  ∎
-
-++-identityʳ : ∀ {A : Set} (xs : List A) → xs ++ [] ≡ xs
-++-identityʳ [] =
-  begin
-    [] ++ []
-  ≡⟨⟩
-    []
-  ∎
-++-identityʳ (x ∷ xs) =
-  begin
-    (x ∷ xs) ++ []
-  ≡⟨⟩
-    x ∷ (xs ++ [])
-  ≡⟨ cong (x ∷_) (++-identityʳ xs) ⟩
-    x ∷ xs
-  ∎
-
-++-assoc : ∀ {A : Set} (xs ys zs : List A)
-  → (xs ++ ys) ++ zs ≡ xs ++ (ys ++ zs)
-++-assoc [] ys zs =
-  begin
-    ([] ++ ys) ++ zs
-  ≡⟨⟩
-    ys ++ zs
-  ≡⟨⟩
-    [] ++ (ys ++ zs)
-  ∎
-++-assoc (x ∷ xs) ys zs =
-  begin
-    (x ∷ xs ++ ys) ++ zs
-  ≡⟨⟩
-    x ∷ (xs ++ ys) ++ zs
-  ≡⟨⟩
-    x ∷ ((xs ++ ys) ++ zs)
-  ≡⟨ cong (x ∷_) (++-assoc xs ys zs) ⟩
-    x ∷ (xs ++ (ys ++ zs))
-  ≡⟨⟩
-    x ∷ xs ++ (ys ++ zs)
-  ∎
-
-length : ∀ {A : Set} → List A → ℕ
-length []        =  zero
-length (x ∷ xs)  =  ℕ.suc (length xs)
-
-reverse : ∀ {A : Set} → List A → List A
-reverse []        =  []
-reverse (x ∷ xs)  =  reverse xs ++ [ x ]
-
-shunt : ∀ {A : Set} → List A → List A → List A
-shunt []       ys  =  ys
-shunt (x ∷ xs) ys  =  shunt xs (x ∷ ys)
-
-
-reverse-++-distrib : ∀ {A : Set} (xs ys : List A)
-  → reverse (xs ++ ys) ≡ reverse ys ++ reverse xs
-reverse-++-distrib [] ys =
-  begin
-    reverse ([] ++ ys)
-  ≡⟨⟩
-    reverse ys
-  ≡⟨ sym ( ++-identityʳ (reverse ys) ) ⟩
-    reverse ys ++ []
-  ≡⟨⟩
-   reverse ys ++ reverse []
-  ∎
-  
-reverse-++-distrib (x ∷ xs) ys = 
-  begin
-    reverse ((x ∷ xs) ++ ys)
-  ≡⟨⟩
-    reverse (x ∷ (xs ++ ys))
-  ≡⟨⟩
-    reverse (xs ++ ys) ++ [ x ]
-  ≡⟨ cong ( _++ [ x ]) (reverse-++-distrib xs ys) ⟩
-    (reverse ys ++ reverse xs) ++ [ x ]
-  ≡⟨ ++-assoc (reverse ys) (reverse xs) ([ x ]) ⟩
-    reverse ys ++ (reverse xs ++ [ x ])
-  ≡⟨⟩
-    reverse ys ++ reverse (x ∷ xs)
-  ∎
-
-
 ----------------------------------
 ----------------------------------
 -- functions
+length : ∀ {A : Set} → List A → ℕ
+length []        =  zero
+length (x ∷ xs)  =  ℕ.suc (length xs)
 
 map : ∀ {A B : Set} → (A → B) → List A → List B
 map f []        =  []
@@ -180,8 +89,6 @@ _*p_ (x ∷ xs) ys = (map (x *_) ys) +p ( +0 ∷  xs *p ys)
 negPoly : List ℤ → List ℤ
 negPoly [] = []
 negPoly (x ∷ xs) = (- x) ∷ negPoly xs
-
-
 
 _-p_ : List ℤ → List ℤ → List ℤ
 _-p_ xs ys = xs +p (negPoly ys)
@@ -239,7 +146,7 @@ karatsuba' (suc n) xs ys = if (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            let bd = karatsuba' n b d in
                            let a_plus_b = addPoly a b in
                            let c_plus_d = addPoly c d in
-                           let ad_plus_bc = (subPoly (subPoly (karatsuba' n a_plus_b c_plus_d) ac) bd) in
+                           let ad_plus_bc = ((karatsuba' n a_plus_b c_plus_d) -p ac) -p bd in
                            ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd
 
 
@@ -720,7 +627,7 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
 
 ad+bc : ∀ (xs ys zs rs : List ℤ)
   → (((xs +p ys) *p (zs +p rs)) -p (xs *p zs)) -p (ys *p rs) ≡ (xs *p rs) +p (ys *p zs)
-ad+bc [] ys zs rs rewrite +pLeftEmpty ys | +pRightEmpty (ys *p (zs +p rs)) | sym (*p-+p-distrib  ys zs rs) | +p-assoc (ys *p zs) (ys *p rs) (negPoly (ys *p rs))  = ? --| negPoly-lemma ys zs = ?   
+ad+bc [] ys zs rs rewrite +pLeftEmpty ys | +pRightEmpty (ys *p (zs +p rs)) | sym (*p-+p-distrib  ys zs rs) | +p-assoc (ys *p zs) (ys *p rs) (negPoly (ys *p rs))   | negPoly-lemma (ys *p rs) = {!!}   
 
 
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
@@ -737,7 +644,7 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            let bd = karatsuba' n b d in
                            let a_plus_b = addPoly a b in
                            let c_plus_d = addPoly c d in
-                           let ad_plus_bc = (subPoly (subPoly (karatsuba' n a_plus_b c_plus_d) ac) bd) in
+                           let ad_plus_bc = ((karatsuba' n a_plus_b c_plus_d) -p ac) -p bd in
                            xs *p ys
                          ≡⟨ cong₂ (_*p_) (split-p m xs) (split-p m ys) ⟩
                            (b +p shiftRight m a) *p (d +p shiftRight m c)
