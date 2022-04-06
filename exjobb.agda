@@ -10,6 +10,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Function using (_∘_)
 open import Level using (Level)
+open import Data.Empty using (⊥; ⊥-elim)
  
 
 -------------------------------
@@ -305,14 +306,23 @@ xs-take-drop n xs = {!!}
 
 
 
+takeFstSplit : ∀ m xs
+  → take m xs ≡ fst (splitAt m xs) 
+takeFstSplit m [] rewrite splitAtEmpty m = refl
+takeFstSplit zero xs rewrite takeZero xs = refl
+takeFstSplit (suc n) (x ∷ xs) = refl
 
+dropSndSplit : ∀ m xs
+  → drop m xs ≡ snd (splitAt m xs)
+dropSndSplit m [] rewrite splitAtEmpty m = refl
+dropSndSplit zero xs rewrite dropZero xs = refl
+dropSndSplit (suc n) (x ∷ xs) = refl
 
-
-
-
-
-
-
+shiftRightDrop : ∀ (m : ℕ) (ys : List ℤ)
+  → shiftRight m (snd (splitAt m ys)) ≡ shiftRight m (drop m ys)
+shiftRightDrop zero xs rewrite dropZero xs = refl
+shiftRightDrop m [] rewrite splitAtEmpty m = refl
+shiftRightDrop (suc m) (x ∷ xs) = refl
 
 ------------------------------- split-p
 
@@ -325,13 +335,15 @@ split-p-new zero xs = λ x →
   ≡⟨ sym (+pLeftEmpty xs) ⟩
     [] +p xs
   ∎
-split-p-new (ℕ.suc m) (y ∷ ys) = λ x →  
+split-p-new (ℕ.suc m) (y ∷ ys) (s≤s m≤xs) =  
   begin
     y ∷ ys
   ≡⟨ cong (_∷ ys) (sym (+-identityʳ y)) ⟩
     y + +0 ∷ ys
-  ≡⟨ cong (y + +0 ∷_) ( {!!} ) ⟩
-    y + +0 ∷ (take m ys +p shiftRight m (drop m ys))
+  ≡⟨ cong (y + +0 ∷_) ( split-p-new m ys m≤xs ) ⟩
+    y + +0 ∷ (fst (splitAt m ys) +p shiftRight m (snd (splitAt m ys)))
+   ≡⟨ cong (y + +0 ∷_) (cong₂ (_+p_) (sym (takeFstSplit m ys)) (shiftRightDrop m ys)) ⟩
+    y + +0 ∷ (take m ys +p shiftRight m (drop m ys)) 
   ∎
 
 
@@ -387,14 +399,14 @@ addZeroes  zero  xs = λ x →
      xs
    ∎
  
-addZeroes (ℕ.suc m) (y ∷ ys) = λ x →
+addZeroes (ℕ.suc m) (y ∷ ys) (s≤s m≤xs) =
   begin
     ((+0 ∷ shiftRight m []) +p (y ∷ ys))
   ≡⟨⟩
     +0 + y ∷ (shiftRight m [] +p ys)
   ≡⟨ cong (_∷ (shiftRight m [] +p ys)) (+-identityˡ y) ⟩
     y ∷ (shiftRight m [] +p ys)
-  ≡⟨ cong (y ∷_) ( {!!} ) ⟩ -- help Max
+  ≡⟨ cong (y ∷_) ( addZeroes m ys m≤xs ) ⟩ -- help Max
     y ∷ ys
   ∎
 
@@ -515,16 +527,28 @@ map-lemma (x ∷ xs) ys = {!!}
 
 -- this is a problem. need to defin it when ys is not empty
 shiftRight-*p : ∀ (m : ℕ) (xs ys : List ℤ)
-  → zero Data.Nat.≤ length ys
-  →  shiftRight m (xs *p ys) ≡ (shiftRight m xs) *p ys 
-shiftRight-*p zero xs ys = λ x → refl
-shiftRight-*p (suc m) xs ys = λ x → begin
-                         +0 ∷ shiftRight m (xs *p ys)
-                       ≡⟨ {!!} ⟩                    -- ≡⟨ cong (+0 ∷_) (shiftRight-*p m xs ys) ⟩
-                         +0 ∷ ((shiftRight m xs) *p ys ) 
-                       ≡⟨ {!!} ⟩ -- might be a problem with the +0 here
-                          (+0 ∷ (shiftRight m xs)) *p ys 
-                        ∎
+  → zero Data.Nat.< length xs
+  → zero Data.Nat.< length ys
+  →  shiftRight m (xs *p ys) ≡ (shiftRight m xs) *p ys
+shiftRight-*p zero xs ys zero<lenXS zero<lenYS = refl
+shiftRight-*p (ℕ.suc m) (x ∷ xs) (y ∷ ys) zero<lenXS zero<lenYS =
+           begin
+              +0 ∷ shiftRight m ((x ∷ xs) *p (y ∷ ys))
+            ≡⟨ cong (+0 ∷_) (shiftRight-*p m (x ∷ xs) (y ∷ ys) zero<lenXS zero<lenYS) ⟩
+              +0 ∷ ((shiftRight m (x ∷ xs)) *p (y ∷ ys) ) 
+            ≡⟨ cong (+0 ∷_) (equality) ⟩ -- might be a problem with the +0 here
+               (+0 ∷ (shiftRight m (x ∷ xs))) *p (y ∷ ys) 
+             ∎
+             where
+              equality : (shiftRight m (x ∷ xs) *p (y ∷ ys)) ≡  (map (_*_ +0) ys +p (shiftRight m (x ∷ xs) *p (y ∷ ys)))
+              equality = begin
+                       (shiftRight m (x ∷ xs) *p (y ∷ ys))
+                     ≡⟨ sym (addZeroes (length ys) (shiftRight m (x ∷ xs) *p (y ∷ ys)) {!!} ) ⟩
+                       shiftRight (length ys) [] +p (shiftRight m (x ∷ xs) *p (y ∷ ys))
+                     ≡⟨ cong (_+p (shiftRight m (x ∷ xs) *p (y ∷ ys))) (sym (map-shiftRight-zero ys)) ⟩
+                         (map (_*_ +0) ys +p (shiftRight m (x ∷ xs) *p (y ∷ ys)))
+                     ∎
+
 
 
 
@@ -605,6 +629,7 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
 *p-+p-distrib-four xs ys zs rs = {!!}
 
 
+
 -------------------
 
 ad+bc : ∀ (xs ys zs rs : List ℤ)
@@ -628,7 +653,7 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            let c_plus_d = addPoly c d in
                            let ad_plus_bc = ((karatsuba' n a_plus_b c_plus_d) -p ac) -p bd in
                            xs *p ys
-                         ≡⟨ cong₂ (_*p_) (split-p m xs) (split-p m ys) ⟩  --length conditional missing
+                         ≡⟨ cong₂ (_*p_) (split-p-new  m xs) (split-p-new  m ys) ⟩  --length conditional missing
                            (b +p shiftRight m a) *p (d +p shiftRight m c)
                        
                          ≡⟨ *p-+p-distrib-four  b (shiftRight m a) d (shiftRight m c) ⟩   -- distrib 3 done. but haven´t finished 4
