@@ -2,6 +2,7 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans; cong; cong₂; cong-app)
 open Eq.≡-Reasoning
 open import Data.Nat using (ℕ; zero; suc; _<?_; _⊓_;_≤_;z≤n; s≤s) renaming(_*_ to _*ℕ_ )
+open import Data.Nat.Properties using (⊓-zeroʳ)
 open import Data.Nat.DivMod
 open import Data.Bool using (Bool; true; false; T; _∧_; _∨_; not)
 open import Data.Integer.Base hiding (_⊓_) 
@@ -16,6 +17,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 -------------------------------
 -- Lists
 -------------------------------
+
 
 data List (A : Set) : Set where
   []  : List A
@@ -257,14 +259,14 @@ addOne x (y ∷ ys) rewrite +-identityʳ x = refl
 negPoly-lemma : ∀ (xs : List ℤ)
   → xs +p (negPoly xs) ≡ shiftRight (length xs) []
 negPoly-lemma [] = refl
-negPoly-lemma (x ∷ xs) =
-  begin
-     x + - x ∷ (xs +p negPoly xs)
-  ≡⟨ {!!} ⟩
-    +0 ∷ (xs +p negPoly xs)
-  ≡⟨ cong (+0 ∷_) (negPoly-lemma xs) ⟩
-    +0 ∷ shiftRight (length xs) []
-  ∎
+negPoly-lemma (x ∷ xs) = {!!} 
+  --begin
+   --  x + - x ∷ (xs +p negPoly xs)
+ -- ≡⟨ {!!} ⟩
+  --  +0 ∷ (xs +p negPoly xs)
+--  ≡⟨ cong (+0 ∷_) (negPoly-lemma xs) ⟩
+ --   +0 ∷ shiftRight (length xs) []
+--  ∎
 
 xs-take-drop : ∀  (n : ℕ) (xs : List ℤ)
   → (take n xs) +p (shiftRight n (drop n xs)) ≡ xs
@@ -406,7 +408,7 @@ addZeroes (ℕ.suc m) (y ∷ ys) (s≤s m≤xs) =
     +0 + y ∷ (shiftRight m [] +p ys)
   ≡⟨ cong (_∷ (shiftRight m [] +p ys)) (+-identityˡ y) ⟩
     y ∷ (shiftRight m [] +p ys)
-  ≡⟨ cong (y ∷_) ( addZeroes m ys m≤xs ) ⟩ -- help Max
+  ≡⟨ cong (y ∷_) ( addZeroes m ys m≤xs ) ⟩ 
     y ∷ ys
   ∎
 
@@ -523,7 +525,11 @@ map-lemma [] ys = {!!}
 map-lemma (x ∷ xs) ys = {!!}
 
 
-
+length-lemma : ∀ (m : ℕ) (y : ℤ) (xs ys : List ℤ)
+  → zero Data.Nat.< length xs
+  → length ys Data.Nat.≤ length (shiftRight m (xs) *p (y ∷ ys))
+length-lemma  zero y xs ys  z<xs  = {!  !}
+length-lemma (suc n) y xs ys z<xs   rewrite map-shiftRight-zero ys = {!!} -- {!!} -- rewrite addZeroes ys ys<yys = ?  
 
 -- this is a problem. need to defin it when ys is not empty
 shiftRight-*p : ∀ (m : ℕ) (xs ys : List ℤ)
@@ -543,7 +549,7 @@ shiftRight-*p (ℕ.suc m) (x ∷ xs) (y ∷ ys) zero<lenXS zero<lenYS =
               equality : (shiftRight m (x ∷ xs) *p (y ∷ ys)) ≡  (map (_*_ +0) ys +p (shiftRight m (x ∷ xs) *p (y ∷ ys)))
               equality = begin
                        (shiftRight m (x ∷ xs) *p (y ∷ ys))
-                     ≡⟨ sym (addZeroes (length ys) (shiftRight m (x ∷ xs) *p (y ∷ ys)) {!!} ) ⟩
+                     ≡⟨ sym (addZeroes (length ys) (shiftRight m (x ∷ xs) *p (y ∷ ys)) (length-lemma m y (x ∷ xs) ys zero<lenXS)) ⟩
                        shiftRight (length ys) [] +p (shiftRight m (x ∷ xs) *p (y ∷ ys))
                      ≡⟨ cong (_+p (shiftRight m (x ∷ xs) *p (y ∷ ys))) (sym (map-shiftRight-zero ys)) ⟩
                          (map (_*_ +0) ys +p (shiftRight m (x ∷ xs) *p (y ∷ ys)))
@@ -597,6 +603,101 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
   ∎
 
 
+
+*p-map-proof : ∀ (x : ℤ) (xs ys : List ℤ)
+  → zero Data.Nat.< length ys
+  → ((x ∷ xs) *p ys) ≡ (map (x *_) ys +p (+0 ∷ (xs *p ys)))
+*p-map-proof x [] ys z<ys = -- *p-map-left-single x ys = {!!} --| --sym (addZeroes 1 (map (x *_) ys)) = ?
+  begin
+    ([ x ] *p ys) 
+--((x ∷ xs) *p ys)
+  ≡⟨ *p-map-left-single x  ys ⟩
+     map (x *_) ys 
+  --  ≡⟨ sym (addZeroes +1 (map (x *_) ys) (?)) ⟩
+   ≡⟨ {!!} ⟩
+     (map (_*_ x) ys +p [ +0 ])
+  ∎
+*p-map-proof x (z ∷ zs) ys z<ys = {!!}
+
+
+
+--map-comm : ∀ (xs ys : List ℤ)
+--  → map (x *_) ys 
+
+*p-comm : ∀ (xs ys : List ℤ)
+  → zero Data.Nat.< length ys
+  → xs *p ys ≡ ys *p xs
+*p-comm [] ys z<ys rewrite *pRightEmpty ys = refl
+*p-comm xs [] z<ys rewrite *pRightEmpty xs = refl
+*p-comm (x ∷ xs) (ys) z<ys  = --rewrite *p-map-proof x xs ys z<ys | *p-comm xs ys z<ys = {!!}
+
+{-
+begin
+    (x ∷ xs) *p (y ∷ ys)
+  ≡⟨ *p-map-proof x xs (y ∷ ys) z<ys ⟩
+    map (x *_) (y ∷ ys) +p (+0 ∷ xs *p (y ∷ ys))
+  ≡⟨⟩
+    x * y +0 ∷ map (x *_) ys +p xs *p (y ∷ ys)
+  ≡⟨⟩
+    x * y +0 ∷ xs *p (y ∷ ys) +p map (x *_) ys
+  ≡⟨⟩
+  ?
+
+-}
+--  ≡⟨ cong ((map (x *_) (y ∷ ys)) +p_) (cong (+0 ∷_) (*p-comm xs (y ∷ ys) z<ys)) ⟩
+ --   (map (x *_) (y ∷ ys) +p (+0 ∷ (( y ∷ ys) *p xs)))
+--  ≡⟨ {!!} ⟩
+ --   (map (x *_) (y ∷ ys) +p (+0 ∷ ((map (y *_) xs) +p (+0 ∷ ys *p xs))))
+--  ≡⟨⟩
+--   (x*y) ∷ (map (x *_) (y ∷ ys) +p (+0 ∷ ((map (y *_) xs) +p (+0 ∷ ys *p xs))))
+  
+  
+    {!!} -- (x * y) ∷ map (x *_) ys +p (+0 ∷ (y ∷ ys *p xs ))
+  -- ≡⟨ {!!} ⟩
+  --  map (y *_) (x ∷ xs) +p (+0 ∷ ys *p (x ∷ xs))
+ -- ∎
+
+
+
+*p-+p-distrib-r : ∀ (xs ys zs : List ℤ)
+  → (xs +p ys) *p zs ≡ (xs *p zs) +p (ys *p zs)
+*p-+p-distrib-r [] ys zs = -- rewrite +pLeftEmpty ys | sym (+pLeftEmpty (ys *p zs)) | 
+  begin
+    ([] +p ys ) *p zs
+  ≡⟨ cong (_*p zs) (+pLeftEmpty ys) ⟩
+    ys *p zs
+  ≡⟨ sym ( +pLeftEmpty (ys *p zs)) ⟩
+   ([] +p (ys *p zs))
+  ∎ 
+*p-+p-distrib-r xs [] zs =
+  begin
+    ((xs +p []) *p zs)
+  ≡⟨ cong (_*p zs) (+pRightEmpty xs) ⟩
+    xs *p zs
+  ≡⟨ sym ( +pRightEmpty (xs *p zs)) ⟩
+  ((xs *p zs) +p [])
+  ∎
+*p-+p-distrib-r xs ys [] = --  rewrite *pRightEmpty (xs +p ys) | *pRightEmpty xs = 
+  begin
+    ((xs +p ys) *p []) 
+  ≡⟨ *pRightEmpty (xs +p ys) ⟩
+    []
+  ≡⟨ sym (*pRightEmpty ys)  ⟩
+    (ys *p [])
+  ≡⟨ sym (+pLeftEmpty (ys *p [])) ⟩
+    ([] +p (ys *p []))
+  ≡⟨ cong (_+p (ys *p [])) (sym (*pRightEmpty xs)) ⟩
+    ((xs *p []) +p (ys *p []))
+   ∎
+--*p-+p-distrib-r xs ys zs rewrite *p-comm (xs +p ys) zs = ? 
+    
+-- (x ∷ xs) (y ∷ ys) (z ∷ zs)
+
+
+
+
+
+
 *p-lemma : ∀ (x : ℤ) (xs ys : List ℤ)
   → (x ∷ xs) *p ys ≡ (map (x *_) ys) +p ( +0 ∷  xs *p ys)
 *p-lemma x [] ys =
@@ -609,23 +710,14 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
     (shiftRight 1 []) +p (map (x *_) ys) 
   ≡⟨⟩
     {!!}
+    
 
-
-*p-comm : ∀ (xs ys : List ℤ)
-  → xs *p ys ≡ ys *p xs
-*p-comm [] ys rewrite *pRightEmpty ys = refl
-*p-comm xs [] rewrite *pRightEmpty xs = refl
-*p-comm (x ∷ xs) ys = 
-  begin
-    (x ∷ xs) *p ys
-  ≡⟨⟩
-    {!!}
 
 *p-+p-distrib-four : ∀ (xs ys zs rs : List ℤ)
   → ((xs +p ys) *p (zs +p rs)) ≡ ((((xs *p zs) +p (xs *p rs)) +p (ys *p zs)) +p (ys *p rs))
 *p-+p-distrib-four [] ys zs rs rewrite +pLeftEmpty ys | sym ( *p-+p-distrib ys zs rs) | +pLeftEmpty (ys *p zs) = refl
 *p-+p-distrib-four xs [] zs rs rewrite +pRightEmpty xs | sym (*p-+p-distrib xs zs rs) | +pRightEmpty ((xs *p zs) +p (xs *p rs)) | +pRightEmpty  ((xs *p zs) +p (xs *p rs)) = refl 
-*p-+p-distrib-four xs ys [] rs rewrite sym (*p-+p-distrib (xs +p ys) [] rs) = {!!} 
+*p-+p-distrib-four xs ys [] rs rewrite sym (*p-+p-distrib (xs +p ys) [] rs) | *pRightEmpty (xs +p ys) | +pLeftEmpty ((xs +p ys) *p rs) = {!!} 
 *p-+p-distrib-four xs ys zs rs = {!!}
 
 
@@ -636,6 +728,11 @@ ad+bc : ∀ (xs ys zs rs : List ℤ)
   → (((xs +p ys) *p (zs +p rs)) -p (xs *p zs)) -p (ys *p rs) ≡ (xs *p rs) +p (ys *p zs)
 ad+bc [] ys zs rs rewrite +pLeftEmpty ys | +pRightEmpty (ys *p (zs +p rs)) | sym (*p-+p-distrib  ys zs rs) | +p-assoc (ys *p zs) (ys *p rs) (negPoly (ys *p rs))   | negPoly-lemma (ys *p rs) = {!!}   
 
+min-length : ∀ (xs ys : List ℤ) 
+  → length xs / 2 ⊓ (length ys / 2) Data.Nat.≤ length xs
+min-length [] ys = z≤n
+min-length xs []  rewrite ⊓-zeroʳ {!!} = {!!}    -- = ?  length xs / 2 ⊓ (length ys / 2
+min-length (x ∷ xs) ys = {!!}
 
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
   → xs *p ys ≡ karatsuba' n xs ys  
@@ -653,7 +750,7 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            let c_plus_d = addPoly c d in
                            let ad_plus_bc = ((karatsuba' n a_plus_b c_plus_d) -p ac) -p bd in
                            xs *p ys
-                         ≡⟨ cong₂ (_*p_) (split-p-new  m xs) (split-p-new  m ys) ⟩  --length conditional missing
+                         ≡⟨ cong₂ (_*p_) (split-p-new  m xs (min-length xs ys)) (split-p-new  m ys ({!!})) ⟩  --length conditional missing in karatsuba. done with split-p
                            (b +p shiftRight m a) *p (d +p shiftRight m c)
                        
                          ≡⟨ *p-+p-distrib-four  b (shiftRight m a) d (shiftRight m c) ⟩   -- distrib 3 done. but haven´t finished 4
