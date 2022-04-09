@@ -9,7 +9,6 @@ open import Data.Integer.Base hiding (_⊓_)
 open import Data.Integer.Properties
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
-open import Function using (_∘_)
 open import Level using (Level)
 open import Data.Empty using (⊥; ⊥-elim)
  
@@ -47,11 +46,6 @@ length (x ∷ xs)  =  ℕ.suc (length xs)
 map : ∀ {A B : Set} → (A → B) → List A → List B
 map f []        =  []
 map f (x ∷ xs)  =  f x ∷ map f xs
-
-zipWith : ∀ {A B C : Set} → (A → B → C) → List A → List B → List C
-zipWith f [] _ = []
-zipWith f _ [] = []
-zipWith f (x ∷ xs) (y ∷ ys) = f x y ∷ zipWith f xs ys
 
 take : ∀ {A : Set} → ℕ → List A → List A
 take n [] = []
@@ -113,10 +107,6 @@ splitAt zero xs = ( [] , xs )
 splitAt _ [] = ( [] , [] )
 splitAt n xs = ( take n xs , drop n xs ) 
 
-mulPoly : List ℤ → List ℤ → List ℤ
-mulPoly [] ys = []
-mulPoly xs [] = []
-mulPoly (x ∷ xs) ys = addPoly (map (x *_) ys) ( +0 ∷  mulPoly xs ys)
 
 
 
@@ -231,7 +221,7 @@ splitAt-n n x xs = refl
   ≡⟨⟩
     (x ∷ []) *p (y ∷ ys)
   ≡⟨⟩
-    (map (x *_) (y ∷ ys)) +p ( +0 ∷ mulPoly [] (y ∷ ys))
+    (map (x *_) (y ∷ ys)) +p ( +0 ∷ [] *p (y ∷ ys))
   ≡⟨⟩
     (x * y ∷ map (x *_) ys) +p [ +0 ] 
   ≡⟨⟩
@@ -370,7 +360,7 @@ split-p  m [] =
 split-p m (x ∷ xs) = {!!}
 
 
-
+--------------------------------------------------
 
 
 
@@ -455,6 +445,13 @@ shiftRight-two-m (ℕ.suc m) xs ys =
 +-rearrange : ∀ (m n p q : ℤ) → (m + n) + (p + q) ≡ m + (n + p) + q
 +-rearrange m n p q rewrite +-assoc m n (p + q) | (sym (+-assoc n p q)) | sym (+-assoc m (n + p) q) = refl
 
++p-rearrange : ∀ (xs ys zs rs : List ℤ)
+  → (xs +p ys) +p (zs +p rs) ≡ (xs +p (ys +p zs)) +p rs
++p-rearrange [] ys zs rs rewrite +pLeftEmpty ys | sym (+p-assoc ys zs rs) | +pLeftEmpty (ys +p zs) = refl 
++p-rearrange xs [] zs rs rewrite +pRightEmpty xs | sym (+p-assoc xs zs rs) | +pLeftEmpty zs = refl
++p-rearrange xs ys [] rs rewrite +pLeftEmpty rs | +pRightEmpty ys = refl
++p-rearrange xs ys zs [] rewrite +pRightEmpty zs | +p-assoc xs ys zs   | +pRightEmpty (xs +p (ys +p zs)) = refl  
++p-rearrange (x ∷ xs) (y ∷ ys) (z ∷ zs) (r ∷ rs) rewrite +-rearrange x y z r | +p-rearrange xs ys zs rs = refl   
 
 +p-assoc-two : ∀ (xs ys zs rs : List ℤ)
   → (xs +p ys) +p (zs +p rs) ≡ (xs +p zs) +p (ys +p rs)  -- ys + (rs + zs) > (ys +rs) + zs > zs + (ys + rs)
@@ -579,10 +576,10 @@ shiftRight-+p zero xs ys = refl
 shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
 
 -- distributivity *p over +p    
-*p-+p-distrib : ∀ (xs ys zs : List ℤ)
+*p-+p-distrib-l : ∀ (xs ys zs : List ℤ)
   → (xs *p ys) +p (xs *p zs) ≡ xs *p (ys +p zs)
-*p-+p-distrib [] ys zs = refl
-*p-+p-distrib xs [] zs =
+*p-+p-distrib-l [] ys zs = refl
+*p-+p-distrib-l xs [] zs =
   begin
     (xs *p []) +p (xs *p zs)
   ≡⟨ cong (_+p (xs *p zs)) (*pRightEmpty xs) ⟩
@@ -592,7 +589,7 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
   ≡⟨ cong (xs *p_) (sym (+pLeftEmpty zs)) ⟩
      (xs *p ([] +p zs))
     ∎
-*p-+p-distrib xs ys [] =
+*p-+p-distrib-l xs ys [] =
   begin
      (xs *p ys) +p (xs *p [])
   ≡⟨ cong ((xs *p ys) +p_) (*pRightEmpty xs) ⟩
@@ -602,7 +599,7 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
   ≡⟨ cong (xs *p_) (sym (+pRightEmpty ys)) ⟩
      (xs *p (ys +p []))
     ∎
-*p-+p-distrib (x ∷ xs) (y ∷ ys) (z ∷ zs) =
+*p-+p-distrib-l (x ∷ xs) (y ∷ ys) (z ∷ zs) =
   begin
     ((x ∷ xs) *p (y ∷ ys)) +p ((x ∷ xs) *p (z ∷ zs))
   ≡⟨⟩
@@ -613,73 +610,11 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
     map (x *_) ((y + z) ∷ (ys +p zs)) +p ((+0 ∷ (xs *p (y ∷ ys))) +p (+0 ∷( xs *p (z ∷ zs))))
   ≡⟨⟩
     map (x *_) ((y + z) ∷ (ys +p zs)) +p (+0 ∷ ((xs *p (y ∷ ys)) +p ( xs *p (z ∷ zs))))
-  ≡⟨ cong ((map (x *_) ((y + z) ∷ (ys +p zs))) +p_) (cong (+0 ∷_) (*p-+p-distrib xs (y ∷ ys) (z ∷ zs))) ⟩
+  ≡⟨ cong ((map (x *_) ((y + z) ∷ (ys +p zs))) +p_) (cong (+0 ∷_) (*p-+p-distrib-l xs (y ∷ ys) (z ∷ zs))) ⟩
     map (x *_) ((y + z) ∷ (ys +p zs)) +p (+0 ∷ (xs *p ((y ∷ ys) +p (z ∷ zs))))
   ∎
 
-
-
---proof-len : ∀ (xs : List ℤ)
---  → zer
-
-
-*p-map-proof : ∀ (x : ℤ) (xs ys : List ℤ)
-  → zero Data.Nat.< length ys
-  → ((x ∷ xs) *p ys) ≡ (map (x *_) ys +p (+0 ∷ (xs *p ys)))
-*p-map-proof x [] ys z<ys =
-  begin
-    ([ x ] *p ys) 
-   --((x ∷ xs) *p ys)
-  ≡⟨ *p-map-left-single x  ys ⟩
-     map (x *_) ys 
-  ≡⟨ sym (addZeroes (ℕ.suc zero) (map (x *_) ys) ({!!})) ⟩ -- (ℕ.suc zero) Data.Nat.≤ (length (map (x *_) ys))
-     ([ +0 ] +p map (x *_) ys)
-  ≡⟨ +p-comm ([ +0 ]) (map (x *_) ys) ⟩
-    (map (_*_ x) ys +p [ +0 ] )
-  ∎
-    
-
-*p-map-proof x (z ∷ zs) ys z<ys = {!!}
-
-
-
---map-comm : ∀ (xs ys : List ℤ)
---  → map (x *_) ys 
-
-*p-comm : ∀ (xs ys : List ℤ)
- → zero Data.Nat.< length xs
- → zero Data.Nat.< length ys
-  → xs *p ys ≡ ys *p xs
-*p-comm [] ys z<xs z<ys rewrite *pRightEmpty ys = refl
-*p-comm xs [] z<xs z<ys rewrite *pRightEmpty xs = refl
-*p-comm (x ∷ xs) (y ∷ ys) z<xs  z<ys  = --rewrite *p-map-proof x xs ys z<ys | *p-comm xs ys z<ys = {!!}
-  begin
-    (x ∷ xs) *p (y ∷ ys)
-  ≡⟨ *p-map-proof x xs (y ∷ ys)  z<ys ⟩
-    map (x *_) (y ∷ ys) +p (+0 ∷ xs *p (y ∷ ys))
-  ≡⟨⟩
-    {!!}
-  --  x * y +0 ∷ map (x *_) ys +p xs *p (y ∷ ys)
-  --≡⟨⟩
-  --  x * y +0 ∷ xs *p (y ∷ ys) +p map (x *_) ys
---  ≡⟨⟩
- -- ?
-
-
---  ≡⟨ cong ((map (x *_) (y ∷ ys)) +p_) (cong (+0 ∷_) (*p-comm xs (y ∷ ys) z<ys)) ⟩
- --   (map (x *_) (y ∷ ys) +p (+0 ∷ (( y ∷ ys) *p xs)))
---  ≡⟨ {!!} ⟩
- --   (map (x *_) (y ∷ ys) +p (+0 ∷ ((map (y *_) xs) +p (+0 ∷ ys *p xs))))
---  ≡⟨⟩
---   (x*y) ∷ (map (x *_) (y ∷ ys) +p (+0 ∷ ((map (y *_) xs) +p (+0 ∷ ys *p xs))))
   
-  
-     -- (x * y) ∷ map (x *_) ys +p (+0 ∷ (y ∷ ys *p xs ))
-  -- ≡⟨ {!!} ⟩
-  --  map (y *_) (x ∷ xs) +p (+0 ∷ ys *p (x ∷ xs))
- -- ∎
-
-
 
 *p-+p-distrib-r : ∀ (xs ys zs : List ℤ)
   →  (xs *p zs) +p (ys *p zs) ≡ (xs +p ys) *p zs 
@@ -723,35 +658,11 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
 
 
 
-*p-lemma : ∀ (x : ℤ) (xs ys : List ℤ)
-  → (x ∷ xs) *p ys ≡ (map (x *_) ys) +p ( +0 ∷  xs *p ys)
-*p-lemma x [] ys =
-  begin
-    [ x ] *p ys
-  ≡⟨ *p-map-left-single x ys ⟩  
-    map (x *_) ys
- --≡⟨ sym (addZeroes 1 (map (x *_) ys)) ⟩
- ≡⟨ {!!} ⟩
-    (shiftRight 1 []) +p (map (x *_) ys) 
-  ≡⟨⟩
-    {!!}
-    
-
-
-*p-+p-distrib-four : ∀ (xs ys zs rs : List ℤ)
-  → ((xs +p ys) *p (zs +p rs)) ≡ ((((xs *p zs) +p (xs *p rs)) +p (ys *p zs)) +p (ys *p rs))
-*p-+p-distrib-four [] ys zs rs rewrite +pLeftEmpty ys | sym ( *p-+p-distrib ys zs rs) | +pLeftEmpty (ys *p zs) = refl
-*p-+p-distrib-four xs [] zs rs rewrite +pRightEmpty xs | sym (*p-+p-distrib xs zs rs) | +pRightEmpty ((xs *p zs) +p (xs *p rs)) | +pRightEmpty  ((xs *p zs) +p (xs *p rs)) = refl 
-*p-+p-distrib-four xs ys [] rs rewrite sym (*p-+p-distrib (xs +p ys) [] rs) | *pRightEmpty (xs +p ys) | +pLeftEmpty ((xs +p ys) *p rs) = {!!} 
-*p-+p-distrib-four xs ys zs rs = {!!}
-
-
-
 -------------------
 
 ad+bc : ∀ (xs ys zs rs : List ℤ)
   → (((xs +p ys) *p (zs +p rs)) -p (xs *p zs)) -p (ys *p rs) ≡ (xs *p rs) +p (ys *p zs)
-ad+bc [] ys zs rs rewrite +pLeftEmpty ys | +pRightEmpty (ys *p (zs +p rs)) | sym (*p-+p-distrib  ys zs rs) | +p-assoc (ys *p zs) (ys *p rs) (negPoly (ys *p rs))   | negPoly-lemma (ys *p rs) = {!!}   
+ad+bc [] ys zs rs rewrite +pLeftEmpty ys | +pRightEmpty (ys *p (zs +p rs)) | sym (*p-+p-distrib-l  ys zs rs) | +p-assoc (ys *p zs) (ys *p rs) (negPoly (ys *p rs))   | negPoly-lemma (ys *p rs) = {!!}   
 
 min-length : ∀ (xs ys : List ℤ) 
   → length xs / 2 ⊓ (length ys / 2) Data.Nat.≤ length xs
@@ -779,14 +690,10 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            (b +p shiftRight m a) *p (d +p shiftRight m c)
                          ≡⟨ sym (*p-+p-distrib-r b (shiftRight m a) (d +p shiftRight m c)) ⟩
                            (b *p (d +p shiftRight m c)) +p ((shiftRight m a) *p (d +p shiftRight m c))
-                         ≡⟨ cong₂ (_+p_) (sym (*p-+p-distrib b d (shiftRight m c))) (sym (*p-+p-distrib (shiftRight m a) d (shiftRight m c))) ⟩
+                         ≡⟨ cong₂ (_+p_) (sym (*p-+p-distrib-l b d (shiftRight m c))) (sym (*p-+p-distrib-l (shiftRight m a) d (shiftRight m c))) ⟩
                            ((b *p d) +p (b *p (shiftRight m c))) +p (((shiftRight m a) *p d) +p (shiftRight m a *p shiftRight m c))
-                         ≡⟨ {!!} ⟩         --≡⟨ *p-+p-distrib-four  b (shiftRight m a) d (shiftRight m c) ⟩   -- rearrange 
-                          (((b *p d) +p (b *p (shiftRight m c))) +p ((shiftRight m a) *p d)) +p (shiftRight m a *p shiftRight m c)
-                          
-                         ≡⟨ cong (_+p (shiftRight m a *p shiftRight m c)) (+p-assoc (b *p d) (b *p (shiftRight m c)) ((shiftRight m a) *p d) ) ⟩ -- done
-                          ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
-                          
+                         ≡⟨ +p-rearrange (b *p d) (b *p (shiftRight m c)) ((shiftRight m a) *p d)  (shiftRight m a *p shiftRight m c) ⟩          
+                           ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
                          ≡⟨ cong (((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p_) (shiftRight-two-m m a c) ⟩  -- shiftRight-two-m not done. wan´t to break out x for lemma
                            ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p ((shiftRight (2 *ℕ m) (a *p c)))          -- shiftRight-+p done. shiftRight-*p not done, need conditional for length . *p-comm would be nice
                          ≡⟨ {!!} ⟩                                                                                                                                                                                                           -- ad+bc, just started
