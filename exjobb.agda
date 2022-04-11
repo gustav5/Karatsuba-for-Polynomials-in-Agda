@@ -1,7 +1,7 @@
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans; cong; cong₂; cong-app)
 open Eq.≡-Reasoning
-open import Data.Nat using (ℕ; zero; suc; _<?_; _⊓_;_≤_;z≤n; s≤s) renaming(_*_ to _*ℕ_ )
+open import Data.Nat using (ℕ; zero; suc; _⊓_ ;z≤n; s≤s) renaming(_*_ to _*ℕ_ ;_+_ to _+ℕ_;_<?_ to _<?ℕ_; _≤_ to _≤ℕ_; _<_ to _<ℕ_;_≥_ to  _≥ℕ_ ) 
 open import Data.Nat.Properties using (⊓-zeroʳ)
 open import Data.Nat.DivMod
 open import Data.Bool using (Bool; true; false; T; _∧_; _∨_; not)
@@ -65,12 +65,6 @@ shiftRight : ℕ → List ℤ → List ℤ
 shiftRight zero xs = xs
 shiftRight (suc n) xs = +0 ∷ shiftRight n xs
 
-addPoly : List ℤ → List ℤ → List ℤ
-addPoly [] [] = []
-addPoly xs [] = xs
-addPoly [] ys = ys
-addPoly (x ∷ xs) (y ∷ ys) = x + y ∷ addPoly xs ys 
-
 _+p_ : List ℤ → List ℤ → List ℤ
 [] +p [] = []
 xs +p [] = xs
@@ -90,8 +84,7 @@ negPoly (x ∷ xs) = (- x) ∷ negPoly xs
 _-p_ : List ℤ → List ℤ → List ℤ
 _-p_ xs ys = xs +p (negPoly ys)
 
-subPoly : List ℤ → List ℤ → List ℤ
-subPoly xs ys = addPoly xs (negPoly ys)
+
 
 record Pair (A B : Set) : Set where
   constructor _,_
@@ -108,8 +101,6 @@ splitAt _ [] = ( [] , [] )
 splitAt n xs = ( take n xs , drop n xs ) 
 
 
-
-
 if_then_else_ : {A : Set} → Bool → A → A → A
 if true then x else y = x
 if false then x else y = y
@@ -122,8 +113,16 @@ zero ≤ᵇ' n       =  true
 suc m ≤ᵇ' zero   =  false
 suc m ≤ᵇ' suc n  =  m ≤ᵇ' n
 
+a : List ℤ
+a = [ + 2 ]
+
+b : List ℤ
+b = [ + 1 , + 2   ]
+
+
+
 --------------------------
---------------------------
+--------------------------x
 -- Karatsuba
 
 
@@ -137,9 +136,7 @@ karatsuba' (suc n) xs ys = if (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            let (d , c) = splitAt m ys in
                            let ac = karatsuba' n a c in 
                            let bd = karatsuba' n b d in
-                           let a_plus_b = addPoly a b in
-                           let c_plus_d = addPoly c d in
-                           let ad_plus_bc = ((karatsuba' n a_plus_b c_plus_d) -p ac) -p bd in
+                           let ad_plus_bc = ((karatsuba' n (a +p b) (c +p d) -p ac) -p bd) in
                            ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd
 
 
@@ -172,10 +169,6 @@ karatsuba xs ys = karatsuba' ((length xs) Data.Nat.⊔ (length ys)) xs ys
   → [] +p xs ≡ xs
 +pLeftEmpty []  = refl
 +pLeftEmpty (x ∷ xs) = refl
-
-+pOne : ∀ (x y : ℤ)
-  → [ x ] +p [ y ] ≡ [ x + y ]
-+pOne x y = refl
 
 shiftRightZero : ∀ (xs : List ℤ)
   → shiftRight zero xs ≡ xs
@@ -240,8 +233,6 @@ addOne x (y ∷ ys) rewrite +-identityʳ x = refl
 
 
 
-
-
 --------------------------
 ---------------   in progress
    
@@ -249,14 +240,14 @@ addOne x (y ∷ ys) rewrite +-identityʳ x = refl
 negPoly-lemma : ∀ (xs : List ℤ)
   → xs +p (negPoly xs) ≡ shiftRight (length xs) []
 negPoly-lemma [] = refl
-negPoly-lemma (x ∷ xs) = {!!} 
-  --begin
-   --  x + - x ∷ (xs +p negPoly xs)
- -- ≡⟨ {!!} ⟩
-  --  +0 ∷ (xs +p negPoly xs)
---  ≡⟨ cong (+0 ∷_) (negPoly-lemma xs) ⟩
- --   +0 ∷ shiftRight (length xs) []
---  ∎
+negPoly-lemma (x ∷ xs) =
+  begin
+     x + - x ∷ (xs +p negPoly xs)  --help max
+  ≡⟨ {!!} ⟩
+    +0 ∷ (xs +p negPoly xs)
+  ≡⟨ cong (+0 ∷_) (negPoly-lemma xs) ⟩
+    +0 ∷ shiftRight (length xs) []
+  ∎
 
 xs-take-drop : ∀  (n : ℕ) (xs : List ℤ)
   → (take n xs) +p (shiftRight n (drop n xs)) ≡ xs
@@ -321,7 +312,7 @@ shiftRightDrop (suc m) (x ∷ xs) = refl
 split-p-new : ∀ (m : ℕ) (xs : List ℤ)
   → (m) Data.Nat.≤ (length xs)
   → xs ≡ (fst (splitAt m xs)) +p (shiftRight m (snd (splitAt m xs)))
-split-p-new zero xs = λ x →
+split-p-new zero xs m≤xs = 
   begin
     xs
   ≡⟨ sym (+pLeftEmpty xs) ⟩
@@ -380,11 +371,11 @@ map-shiftRight-zero (y ∷ ys) =
 
 
 ---------------------------------
--------------------  addZeroes. need to fix the conditional here
-addZeroes : ∀ (m : ℕ) (xs : List ℤ)       -- if we add list zeroes to a list, and the list of zeroes |zeroes| leq |xs|,
-   → (m) Data.Nat.≤ (length xs)            --xs will remain the same.
+-------------------  addZeroes. 
+addZeroes : ∀ (m : ℕ) (xs : List ℤ)       
+   → (m) ≤ℕ (length xs)          
    →  shiftRight m [] +p xs ≡ xs
-addZeroes  zero  xs = λ x →
+addZeroes  zero  xs m≤xs = 
   begin
     [] +p xs
    ≡⟨ +pLeftEmpty xs ⟩
@@ -424,22 +415,11 @@ break-out (x ∷ xs) (y ∷ ys) =
 
 
 
-shiftRight-two-m : ∀ (m : ℕ) (xs ys : List ℤ)
-  → shiftRight m xs *p shiftRight m ys ≡ shiftRight (2 Data.Nat.* m) (xs *p ys)
-shiftRight-two-m zero xs ys = refl
-shiftRight-two-m (ℕ.suc m) xs ys =
-  begin
-    (+0 ∷ shiftRight m xs) *p (+0 ∷ shiftRight m ys)
-  ≡⟨⟩
-     +0 ∷ (map (+0 *_) (shiftRight m ys) +p (shiftRight m xs *p (+0 ∷ shiftRight m ys))) -- using break out here. but then no list can be empty
-  ≡⟨ {!!} ⟩
-    +0 ∷ (map (+0 *_) (shiftRight m ys) +p (+0 ∷ (shiftRight m xs *p shiftRight m ys)))
-  ≡⟨ cong (+0 ∷_) (cong ((map (+0 *_) (shiftRight m ys)) +p_) (cong (+0 ∷_) (shiftRight-two-m m xs ys))) ⟩
-     +0 ∷ (map (+0 *_) (shiftRight m ys) +p (+0 ∷ shiftRight (m Data.Nat.+ (m Data.Nat.+ zero)) (xs *p ys)))
-  ≡⟨ cong (+0 ∷_) (cong (_+p (+0 ∷ shiftRight (m Data.Nat.+ (m Data.Nat.+ zero)) (xs *p ys)))  (map-shiftRight-zero (shiftRight m ys) ))  ⟩
-    +0 ∷ (shiftRight (length (shiftRight m ys)) [] +p (+0 ∷ shiftRight (2 Data.Nat.* m) (xs *p ys)))
-  ≡⟨ cong (+0 ∷_) ({!!} ) ⟩    --(length (shiftRight m ys)) = m + length ys
-    {!!}
+shiftRight-shiftRight : ∀ (m n : ℕ) (xs  : List ℤ)
+  → shiftRight m (shiftRight n xs) ≡ shiftRight (m +ℕ n) xs
+shiftRight-shiftRight zero n xs = refl
+shiftRight-shiftRight (ℕ.suc m) n xs rewrite shiftRight-shiftRight m n xs = refl 
+
 
 
 +-rearrange : ∀ (m n p q : ℤ) → (m + n) + (p + q) ≡ m + (n + p) + q
@@ -459,7 +439,7 @@ shiftRight-two-m (ℕ.suc m) xs ys =
 +p-assoc-two xs [] zs rs rewrite +pRightEmpty xs | sym (+p-assoc xs zs rs) | +pLeftEmpty rs = refl   
 +p-assoc-two xs ys [] rs rewrite +pLeftEmpty rs | +p-assoc xs ys rs | +pRightEmpty xs = refl 
 +p-assoc-two xs ys zs [] rewrite +pRightEmpty zs | +p-comm xs ys | +p-assoc ys xs zs | +p-comm ys (xs +p zs) | +pRightEmpty ys = refl
-+p-assoc-two (x ∷ xs) (y ∷ ys) (z ∷ zs) (r ∷ rs)  rewrite +p-assoc-two xs ys zs rs | +-rearrange x y z r | +-comm y z | sym (+-rearrange x z y r) = refl 
++p-assoc-two ( x ∷ xs) (y ∷ ys) (z ∷ zs) (r ∷ rs)  rewrite +p-assoc-two xs ys zs rs | +-rearrange x y z r | +-comm y z | sym (+-rearrange x z y r) = refl 
 
 
 map-+p-dist-two : ∀  (x y : ℤ)  (zs : List ℤ)
@@ -503,7 +483,7 @@ addZero-+p (x ∷ xs) =
 
 
 zeroleq : ∀ (m : ℕ) 
-  → (m) Data.Nat.≤ zero
+  → (m) ≤ℕ zero
   → m ≡ zero
 zeroleq m = λ x → begin
                 m
@@ -537,16 +517,18 @@ map-lemma [] ys = {!!}
 map-lemma (x ∷ xs) ys = {!!}
 
 
+
+
 length-lemma : ∀ (m : ℕ) (y : ℤ) (xs ys : List ℤ)
-  → zero Data.Nat.< length xs
-  → length ys Data.Nat.≤ length (shiftRight m (xs) *p (y ∷ ys))
+  → zero <ℕ length xs
+  → length ys ≤ℕ length (shiftRight m (xs) *p (y ∷ ys))
 length-lemma  zero y xs ys  z<xs  = {!  !}
 length-lemma (suc n) y xs ys z<xs   rewrite map-shiftRight-zero ys = {!!} -- {!!} -- rewrite addZeroes ys ys<yys = ?  
 
 -- this is a problem. need to defin it when ys is not empty
 shiftRight-*p : ∀ (m : ℕ) (xs ys : List ℤ)
-  → zero Data.Nat.< length xs
-  → zero Data.Nat.< length ys
+  → zero <ℕ length xs
+  → zero <ℕ length ys
   →  shiftRight m (xs *p ys) ≡ (shiftRight m xs) *p ys
 shiftRight-*p zero xs ys zero<lenXS zero<lenYS = refl
 shiftRight-*p (ℕ.suc m) (x ∷ xs) (y ∷ ys) zero<lenXS zero<lenYS =
@@ -575,30 +557,35 @@ shiftRight-+p : ∀ (m : ℕ) (xs ys : List ℤ)
 shiftRight-+p zero xs ys = refl
 shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
 
+
+
+
+
+shiftRight-two-m : ∀ (m : ℕ) (xs ys : List ℤ)
+  → zero <ℕ length xs
+  → zero <ℕ length (shiftRight m ys)
+  → shiftRight m xs *p shiftRight m ys ≡ shiftRight (2 Data.Nat.* m) (xs *p ys)
+shiftRight-two-m zero xs ys z<xs z<ys = refl
+shiftRight-two-m (ℕ.suc m) xs ys z<xs z<srys =
+  begin
+    (shiftRight (ℕ.suc m) xs) *p (shiftRight (ℕ.suc m) ys)
+  ≡⟨ sym (shiftRight-*p (ℕ.suc m) xs (shiftRight (ℕ.suc m) ys) z<xs z<srys) ⟩
+    shiftRight (ℕ.suc m) (xs *p shiftRight (ℕ.suc m) ys)
+  ≡⟨⟩
+    {!!}
+
+
+
+
+
+
+
 -- distributivity *p over +p    
 *p-+p-distrib-l : ∀ (xs ys zs : List ℤ)
   → (xs *p ys) +p (xs *p zs) ≡ xs *p (ys +p zs)
 *p-+p-distrib-l [] ys zs = refl
-*p-+p-distrib-l xs [] zs =
-  begin
-    (xs *p []) +p (xs *p zs)
-  ≡⟨ cong (_+p (xs *p zs)) (*pRightEmpty xs) ⟩
-    [] +p (xs *p zs)
-  ≡⟨ +pLeftEmpty (xs *p zs) ⟩
-    xs *p  zs
-  ≡⟨ cong (xs *p_) (sym (+pLeftEmpty zs)) ⟩
-     (xs *p ([] +p zs))
-    ∎
-*p-+p-distrib-l xs ys [] =
-  begin
-     (xs *p ys) +p (xs *p [])
-  ≡⟨ cong ((xs *p ys) +p_) (*pRightEmpty xs) ⟩
-    (xs *p ys) +p []
-  ≡⟨ +pRightEmpty (xs *p ys) ⟩
-     xs *p  ys
-  ≡⟨ cong (xs *p_) (sym (+pRightEmpty ys)) ⟩
-     (xs *p (ys +p []))
-    ∎
+*p-+p-distrib-l xs [] zs rewrite *pRightEmpty xs | +pLeftEmpty (xs *p zs) | +pLeftEmpty zs = refl 
+*p-+p-distrib-l xs ys [] rewrite *pRightEmpty xs | +pRightEmpty (xs *p ys) | +pRightEmpty ys = refl  
 *p-+p-distrib-l (x ∷ xs) (y ∷ ys) (z ∷ zs) =
   begin
     ((x ∷ xs) *p (y ∷ ys)) +p ((x ∷ xs) *p (z ∷ zs))
@@ -656,23 +643,112 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
    ∎
 
 
+lemmaLen : ∀ (xs ys : List ℤ)
+  → length ys ≤ℕ length xs
+  → (xs +p ys) -p ys ≡ xs
+lemmaLen xs [] xs≥ys rewrite +pRightEmpty xs | +pRightEmpty xs = refl
+lemmaLen (x ∷ xs) (y ∷ ys) (s≤s ys≤xs) =
+  begin
+    ((x + y ∷ (xs +p ys)) -p (y ∷ ys))
+  ≡⟨⟩
+    x + y - y ∷ (xs +p ys) -p ys -- help Max
+  ≡⟨ {!!} ⟩
+    x  ∷ (xs +p ys) -p ys
+  ≡⟨ cong (x ∷_) ( lemmaLen xs ys ys≤xs) ⟩
+    x ∷ xs
+  ∎
 
+
+
+*p-map-proof : ∀ (x : ℤ) (xs ys : List ℤ)
+  → zero <ℕ length ys
+  → (x ∷ xs) *p ys ≡ (map (x *_) ys +p (+0 ∷ (xs *p ys)))
+*p-map-proof x [] ys z<ys  =  --rewrite *p-map-left-single x ys | addZeroes 1 []  
+  begin
+    [ x ] *p ys
+  ≡⟨ cong ([ x ] *p_) (sym (addZeroes 1 ys z<ys)) ⟩
+    ([ x ] *p ([ +0 ] +p ys))
+  ≡⟨ sym (*p-+p-distrib-l [ x ] [ +0 ] ys) ⟩
+    ([ x ] *p [ +0 ]) +p ([ x ] *p ys)
+  ≡⟨⟩
+    (((x * +0 + +0) ∷ [] ) +p ([ x ] *p ys)) 
+  ≡⟨ cong (_+p ([ x ] *p ys)) (cong (_∷ []) (+-identityʳ (x * +0))) ⟩
+    ([ x * +0 ] +p ([ x ] *p ys))
+  ≡⟨ cong (_+p ([ x ] *p ys)) (cong (_∷ []) (*-zeroʳ x)) ⟩
+    ([ +0 ] +p ([ x ] *p ys))
+  ≡⟨ +p-comm [ +0 ] ([ x ] *p ys) ⟩
+    ([ x ] *p ys) +p [ +0 ]
+  ≡⟨ cong (_+p [ +0 ]) (*p-map-left-single x ys) ⟩
+    map (_*_ x) ys +p [ +0 ]
+   ∎ 
+*p-map-proof x  (z ∷ zs) (y ∷ ys) z<ys  = refl  
+
+
+{-
+*p-comm : ∀ (xs ys : List ℤ)
+  → zero <ℕ length xs
+  → zero <ℕ length ys
+  → xs *p ys ≡ ys *p xs
+*p-comm (x ∷  xs) (y ∷ ys) z<xs z<ys =
+  begin
+    x * y + +0 ∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))
+  ≡⟨ {!!} ⟩
+    +0 + x * y ∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))    
+  ≡⟨ {!!} ⟩
+    +0 ∷ (map (_*_ x) ys) +p ((x * y) ∷ (xs *p (y ∷ ys)))
+  ≡⟨ {!!} ⟩
+    +0 ∷ (map (_*_ x) ys) +p ((y * x) ∷ ((map (y *_) xs) +p (+0 ∷ (ys *p xs))) )
+  ≡⟨⟩
+    +0 ∷ (map (_*_ x) ys) +p ((y * x) ∷ (((y * x´) ∷ (map (y *_) xs) +p +0 ∷ (ys *p xs))
+  ≡⟨⟩
+    +0 ∷ (map (_*_ x) ys) +p ((y * x) ∷ ((y * x´) ∷ ((map (y *_) xs) +p (ys *p xs))
+    
+  +0((y * x) ∷ (map (_*_ x) ys) +p  ((y * x´) ∷ ((map (y *_) xs) +p (ys *p xs))
+
+   -- (+0 ∷ (map (_*_ x) ys)) +p ((x * y) ∷ (xs *p (y ∷ ys)))
+ -- ≡⟨ {!!} ⟩
+  --  (+0 ∷ (map (_*_ x) ys)) +p ((x * y) ∷ (map (y *_) xs +p 0 ∷ (ys *p xs)))
+   -} 
+
+--(x ∷ xs) *p ys
+  --≡⟨ *p-map-proof x xs ys z<ys ⟩
+    --(map (_*_ x) ys +p (+0 ∷ (xs *p ys)))
+  
+
+
+
+{- ≡⟨⟩
+    x * y + +0 ∷ (map (_*_ x) ys +p ((y ∷ ys) *p xs))
+-}
 
 -------------------
 
+lemmaThree : ∀ (xs ys zs rs : List ℤ)
+  → ((xs +p ys) *p (zs +p rs)) +p (negPoly (xs *p zs)) ≡ (xs *p rs) +p ((ys *p zs) +p (ys *p rs))
+lemmaThree [] ys zs rs rewrite +pLeftEmpty ys | +pRightEmpty (ys *p (zs +p rs)) | sym (*p-+p-distrib-l ys zs rs) | +pLeftEmpty ((ys *p zs) +p (ys *p rs)) = refl 
+lemmaThree (x ∷ xs) (y ∷ ys) (z ∷ zs) (r ∷ rs) =
+  begin
+    {!!}
+    
+
 ad+bc : ∀ (xs ys zs rs : List ℤ)
+  → zero <ℕ length xs →  zero <ℕ length ys → zero <ℕ length zs → zero <ℕ length rs 
   → (((xs +p ys) *p (zs +p rs)) -p (xs *p zs)) -p (ys *p rs) ≡ (xs *p rs) +p (ys *p zs)
-ad+bc [] ys zs rs rewrite +pLeftEmpty ys | +pRightEmpty (ys *p (zs +p rs)) | sym (*p-+p-distrib-l  ys zs rs) | +p-assoc (ys *p zs) (ys *p rs) (negPoly (ys *p rs))   | negPoly-lemma (ys *p rs) = {!!}   
+-- ad+bc xs ys zs rs z<xs z<ys z<zs z<rs rewrite +pLeftEmpty ys | +pRightEmpty (ys *p (zs +p rs)) | sym (*p-+p-distrib-l  ys zs rs)   | +p-assoc (ys *p zs) (ys *p rs) (negPoly (ys *p rs)) 
+
+
+
+--| negPoly-lemma (ys *p rs) | +p-comm (ys *p zs) (shiftRight (length (ys *p rs)) []) = {!!}  -- | addZeroes (shiftRight (length (ys *p rs)) [] +p (ys *p zs)) = ?  --| if (length (ys *p rs)) ≤ᵇ' (length (ys *p zs)) then ? else ?
 
 min-length : ∀ (xs ys : List ℤ) 
-  → length xs / 2 ⊓ (length ys / 2) Data.Nat.≤ length xs
+  → length xs / 2 ⊓ (length ys / 2) ≤ℕ length xs
 min-length [] ys = z≤n
-min-length xs []  rewrite ⊓-zeroʳ {!!} = {!!}    -- = ?  length xs / 2 ⊓ (length ys / 2
+min-length xs []  = {!!} -- rewrite ⊓-zeroʳ    = {!!}  -- = ?  length xs / 2 ⊓ (length ys / 2
 min-length (x ∷ xs) ys = {!!}
 
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
   → xs *p ys ≡ karatsuba' n xs ys  
-ismul' zero xs ys = refl
+ismul' zero xs ys = refl    
 ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
 ...                   | true = refl
 ...                   | false =
@@ -682,9 +758,7 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            let (d , c) = splitAt m ys in
                            let ac = karatsuba' n a c in 
                            let bd = karatsuba' n b d in
-                           let a_plus_b = addPoly a b in
-                           let c_plus_d = addPoly c d in
-                           let ad_plus_bc = ((karatsuba' n a_plus_b c_plus_d) -p ac) -p bd in
+                           let ad_plus_bc = ((karatsuba' n (a +p b) (c +p d) -p ac) -p bd) in
                            xs *p ys
                          ≡⟨ cong₂ (_*p_) (split-p-new  m xs (min-length xs ys)) (split-p-new  m ys ({!!})) ⟩  --length conditional missing in karatsuba. done with split-p
                            (b +p shiftRight m a) *p (d +p shiftRight m c)
@@ -694,7 +768,9 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            ((b *p d) +p (b *p (shiftRight m c))) +p (((shiftRight m a) *p d) +p (shiftRight m a *p shiftRight m c))
                          ≡⟨ +p-rearrange (b *p d) (b *p (shiftRight m c)) ((shiftRight m a) *p d)  (shiftRight m a *p shiftRight m c) ⟩          
                            ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
-                         ≡⟨ cong (((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p_) (shiftRight-two-m m a c) ⟩  -- shiftRight-two-m not done. wan´t to break out x for lemma
+                         --≡⟨ cong (((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p_) (shiftRight-m m a c) ⟩  --shiftRight-*p
+                          -- ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
+                         ≡⟨ {!!} ⟩
                            ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p ((shiftRight (2 *ℕ m) (a *p c)))          -- shiftRight-+p done. shiftRight-*p not done, need conditional for length . *p-comm would be nice
                          ≡⟨ {!!} ⟩                                                                                                                                                                                                           -- ad+bc, just started
                            ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd ∎
