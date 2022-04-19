@@ -243,7 +243,7 @@ negPoly-lemma [] = refl
 negPoly-lemma (x ∷ xs) =
   begin
      x + - x ∷ (xs +p negPoly xs)  --help max
-  ≡⟨ {!!} ⟩
+  ≡⟨ cong (_∷ (xs +p negPoly xs)) (+-inverseʳ x) ⟩
     +0 ∷ (xs +p negPoly xs)
   ≡⟨ cong (+0 ∷_) (negPoly-lemma xs) ⟩
     +0 ∷ shiftRight (length xs) []
@@ -561,18 +561,6 @@ shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
 
 
 
-shiftRight-two-m : ∀ (m : ℕ) (xs ys : List ℤ)
-  → zero <ℕ length xs
-  → zero <ℕ length (shiftRight m ys)
-  → shiftRight m xs *p shiftRight m ys ≡ shiftRight (2 Data.Nat.* m) (xs *p ys)
-shiftRight-two-m zero xs ys z<xs z<ys = refl
-shiftRight-two-m (ℕ.suc m) xs ys z<xs z<srys =
-  begin
-    (shiftRight (ℕ.suc m) xs) *p (shiftRight (ℕ.suc m) ys)
-  ≡⟨ sym (shiftRight-*p (ℕ.suc m) xs (shiftRight (ℕ.suc m) ys) z<xs z<srys) ⟩
-    shiftRight (ℕ.suc m) (xs *p shiftRight (ℕ.suc m) ys)
-  ≡⟨⟩
-    {!!}
 
 
 
@@ -651,22 +639,42 @@ lemmaLen (x ∷ xs) (y ∷ ys) (s≤s ys≤xs) =
   begin
     ((x + y ∷ (xs +p ys)) -p (y ∷ ys))
   ≡⟨⟩
-    x + y - y ∷ (xs +p ys) -p ys -- help Max
-  ≡⟨ {!!} ⟩
+    (x + y) + ( - y) ∷ (xs +p ys) -p ys
+  ≡⟨ cong (_∷ ((xs +p ys) -p ys)) (+-assoc x y (- y)) ⟩
+    (x + (y + - y)) ∷ ((xs +p ys) -p ys) 
+  ≡⟨ cong (_∷ ((xs +p ys) -p ys)) (cong₂ (_+_) (refl) ((+-inverseʳ y))  ) ⟩ -- (+-inverseʳ y)
     x  ∷ (xs +p ys) -p ys
-  ≡⟨ cong (x ∷_) ( lemmaLen xs ys ys≤xs) ⟩
+  ≡⟨ cong (x ∷_) (+p-assoc xs ys (negPoly ys) ) ⟩
+    x ∷ (xs +p (ys -p ys))
+  ≡⟨ cong (x ∷_ ) (cong (xs +p_) (negPoly-lemma  ys)) ⟩
+    x ∷ (xs +p shiftRight (length ys) [])
+  ≡⟨ cong (x ∷_) (+p-comm xs (shiftRight (length ys) [])) ⟩
+    x ∷ (shiftRight (length ys) [] +p xs)
+  ≡⟨ cong (x ∷_) (addZeroes (length ys) xs ys≤xs)  ⟩
     x ∷ xs
-  ∎
+  ∎ 
+    --x  ∷ (xs +p ys) +p negPoly ys
+  --≡⟨⟩
+    --{!!}
+-- ≡⟨ cong (x ∷_) ( lemmaLen xs ys ys≤xs) ⟩
+  --  x ∷ xs
+ -- ∎
 
-
+len :  ∀ (ys : List ℤ)
+  → 0 <ℕ length ys 
+  → (1 ≤ᵇ' length ys) ≡ true
+len ys 0<ys = {!!}  
+  --begin
+  --  1 ≤ᵇ' (ℕ.suc (length ys))
+ -- ≡⟨⟩
+    --{!!}
 
 *p-map-proof : ∀ (x : ℤ) (xs ys : List ℤ)
-  → zero <ℕ length ys
   → (x ∷ xs) *p ys ≡ (map (x *_) ys +p (+0 ∷ (xs *p ys)))
-*p-map-proof x [] ys z<ys  =  --rewrite *p-map-left-single x ys | addZeroes 1 []  
+*p-map-proof x [] ys   =  --rewrite *p-map-left-single x ys | addZeroes 1 []  
   begin
     [ x ] *p ys
-  ≡⟨ cong ([ x ] *p_) (sym (addZeroes 1 ys z<ys)) ⟩
+  ≡⟨ cong ([ x ] *p_) (sym (addZeroes 1 ys {!!})) ⟩
     ([ x ] *p ([ +0 ] +p ys))
   ≡⟨ sym (*p-+p-distrib-l [ x ] [ +0 ] ys) ⟩
     ([ x ] *p [ +0 ]) +p ([ x ] *p ys)
@@ -680,15 +688,53 @@ lemmaLen (x ∷ xs) (y ∷ ys) (s≤s ys≤xs) =
     ([ x ] *p ys) +p [ +0 ]
   ≡⟨ cong (_+p [ +0 ]) (*p-map-left-single x ys) ⟩
     map (_*_ x) ys +p [ +0 ]
-   ∎ 
-*p-map-proof x  (z ∷ zs) (y ∷ ys) z<ys  = refl  
-
-
-{-
+   ∎
+*p-map-proof x  (z ∷ zs) ys  =
+  begin
+    ((x ∷ z ∷ zs) *p ys)
+  ≡⟨⟩
+    ((x ∷ z ∷ zs) *p ys)
+  ≡⟨ {!!} ⟩
+    (map (x *_) ys +p (+0 ∷ (map (z *_) ys))) +p (+0 ∷ (zs *p ys))
+  ≡⟨ {!!} ⟩
+    map (x *_) ys +p (+0 ∷ (map (z *_) ys +p (+0 ∷ (zs *p ys))))
+  ≡⟨ cong (map (x *_) ys +p_) ( cong (+0 ∷_) (sym (*p-map-proof z zs ys))) ⟩
+    map (x *_) ys +p (+0 ∷ ((z ∷ zs) *p ys))
+  ∎
 *p-comm : ∀ (xs ys : List ℤ)
-  → zero <ℕ length xs
-  → zero <ℕ length ys
   → xs *p ys ≡ ys *p xs
+*p-comm [] ys  rewrite *pRightEmpty ys = refl
+*p-comm xs []  rewrite *pRightEmpty xs = refl
+*p-comm (x ∷ xs) (y ∷ ys)  =
+  begin
+    x * y + +0 ∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))
+  ≡⟨ cong (_∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))) (+-identityʳ  (x * y)) ⟩
+    x * y ∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))
+ ≡⟨ cong (x * y ∷_) (cong ((map (_*_ x) ys) +p_)  (*p-comm xs (y ∷ ys))) ⟩
+   x * y ∷ (map (_*_ x) ys +p ((y ∷ ys) *p xs))
+  ≡⟨ cong (x * y ∷_) (cong ((map (_*_ x) ys) +p_)  (*p-map-proof y ys xs )) ⟩
+    x * y ∷ (map (_*_ x) ys +p (map (y *_) xs +p (+0 ∷ (ys *p xs))))
+  ≡⟨ cong (x * y ∷_) (sym (+p-assoc (map (_*_ x) ys) (map (y *_) xs) (+0 ∷ (ys *p xs)))) ⟩
+     x * y ∷ ((map (_*_ x) ys +p map (y *_) xs) +p (+0 ∷ (ys *p xs)))
+  ≡⟨ cong (x * y ∷_) (cong (_+p (+0 ∷ (ys *p xs))) (+p-comm (map (_*_ x) ys) (map (y *_) xs))) ⟩
+     x * y ∷ ((map (y *_) xs +p map (_*_ x) ys) +p (+0 ∷ (ys *p xs)))
+  ≡⟨ cong (x * y ∷_) (+p-assoc (map (y *_) xs) (map (_*_ x) ys) (+0 ∷ (ys *p xs))) ⟩
+    x * y ∷ (map (y *_) xs +p (map (_*_ x) ys +p (+0 ∷ (ys *p xs))))
+  ≡⟨ cong (x * y ∷_) (cong (map (y *_) xs +p_) (cong (map (x *_) ys +p_) (cong (+0 ∷_)  (*p-comm ys xs)))) ⟩
+    x * y ∷  (map (y *_) xs +p (map (x *_) ys +p (+0 ∷ (xs *p ys))))
+  ≡⟨ cong (x * y ∷_) (cong (map (y *_) xs +p_) (sym (*p-map-proof x xs ys)))  ⟩
+    x * y ∷ (map (y *_) xs +p ((x ∷ xs) *p ys))
+  ≡⟨ cong (_∷ (map (y *_) xs +p ((x ∷ xs) *p ys))) (*-comm x y) ⟩
+    y * x ∷ (map (y *_) xs +p ((x ∷ xs) *p ys))
+  ≡⟨ cong (_∷ (map (y *_) xs +p ((x ∷ xs) *p ys))) (sym (+-identityʳ  (y * x))) ⟩
+    y * x + +0 ∷ (map (y *_) xs +p ((x ∷ xs) *p ys))
+  ≡⟨ cong ((y * x + +0) ∷_) (cong (map (y *_) xs +p_) (*p-comm (x ∷ xs) ys)) ⟩
+    y * x + +0 ∷ (map (y *_) xs +p (ys *p (x ∷ xs))) 
+  ∎
+
+  --≡⟨ cong (x * y ∷_) (cong ((map (_*_ x) ys) +p_) (m)) ⟩
+    --{!!}
+{-
 *p-comm (x ∷  xs) (y ∷ ys) z<xs z<ys =
   begin
     x * y + +0 ∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))
@@ -722,6 +768,36 @@ lemmaLen (x ∷ xs) (y ∷ ys) (s≤s ys≤xs) =
 -}
 
 -------------------
+
+
+shiftRight-two-m : ∀ (m : ℕ) (xs ys : List ℤ)
+  → zero <ℕ length xs
+  → zero <ℕ length (shiftRight m ys)
+  → shiftRight m xs *p shiftRight m ys ≡ shiftRight (2 Data.Nat.* m) (xs *p ys)
+shiftRight-two-m zero xs ys z<xs z<ys = refl
+shiftRight-two-m (ℕ.suc m) xs ys z<xs z<srys =
+  begin
+    (shiftRight (ℕ.suc m) xs) *p (shiftRight (ℕ.suc m) ys)
+  ≡⟨ sym (shiftRight-*p (ℕ.suc m) xs (shiftRight (ℕ.suc m) ys) z<xs z<srys) ⟩
+    shiftRight (ℕ.suc m) (xs *p shiftRight (ℕ.suc m) ys)
+  ≡⟨ {!!} ⟩
+    shiftRight (ℕ.suc m) ((shiftRight (ℕ.suc m) ys) *p xs)
+  ≡⟨ {!!} ⟩
+    shiftRight (ℕ.suc m) ((shiftRight (ℕ.suc m) ys) *p xs)
+  ≡⟨ {!!} ⟩
+    shiftRight (ℕ.suc m) ((shiftRight (ℕ.suc m) (ys *p xs)))
+  ≡⟨ shiftRight-shiftRight (ℕ.suc m) (ℕ.suc m) (ys *p xs) ⟩
+    +0 ∷ shiftRight (m +ℕ ℕ.suc m) (ys *p xs)
+  ≡⟨ {!!} ⟩
+    +0 ∷ shiftRight (m +ℕ ℕ.suc (m +ℕ zero )) (xs *p ys)
+  ∎
+
+
+--shiftRight (ℕ.suc m) (shiftRight (ℕ.suc m) (xs *p ys))
+  --≡⟨ {!!} ⟩
+   -- {!!}
+
+
 
 lemmaThree : ∀ (xs ys zs rs : List ℤ)
   → ((xs +p ys) *p (zs +p rs)) +p (negPoly (xs *p zs)) ≡ (xs *p rs) +p ((ys *p zs) +p (ys *p rs))
@@ -770,7 +846,7 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
                          --≡⟨ cong (((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p_) (shiftRight-m m a c) ⟩  --shiftRight-*p
                           -- ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
-                         ≡⟨ {!!} ⟩
+                         ≡⟨ cong (((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p_) (shiftRight-two-m m a c ) ⟩
                            ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p ((shiftRight (2 *ℕ m) (a *p c)))          -- shiftRight-+p done. shiftRight-*p not done, need conditional for length . *p-comm would be nice
                          ≡⟨ {!!} ⟩                                                                                                                                                                                                           -- ad+bc, just started
                            ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd ∎
