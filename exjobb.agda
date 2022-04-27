@@ -17,10 +17,6 @@ open import libExjobb
 
 
 
-
-
-
-
 --------------------------
 --------------------------x
 -- Karatsuba
@@ -202,7 +198,20 @@ len ys 0<ys = {!!}
   ≡⟨ cong (map (x *_) ys +p_) ( cong (+0 ∷_) (sym (*p-map-proof z zs ys))) ⟩
     map (x *_) ys +p (+0 ∷ ((z ∷ zs) *p ys))
   ∎
-  
+
+
+*p-comm' : ∀ (xs ys : List ℤ)
+  → xs *p ys ≡ ys *p xs
+*p-comm' [] ys  rewrite *pRightEmpty ys = refl
+*p-comm' xs []  rewrite *pRightEmpty xs = refl
+*p-comm' (x ∷ []) ys  rewrite *p-map-left-single x ys = ?  
+*p-comm' xs (y ∷ [])  = {!!} 
+*p-comm' (x1 ∷ x2 ∷  xs)  (y1 ∷ y2 ∷ ys)  = {!!}
+ 
+
+
+
+
 *p-comm : ∀ (xs ys : List ℤ)
   → xs *p ys ≡ ys *p xs
 *p-comm [] ys  rewrite *pRightEmpty ys = refl
@@ -212,7 +221,7 @@ len ys 0<ys = {!!}
     x * y + +0 ∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))
   ≡⟨ cong (_∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))) (+-identityʳ  (x * y)) ⟩
     x * y ∷ (map (_*_ x) ys +p (xs *p (y ∷ ys)))
- ≡⟨ cong (x * y ∷_) (cong ((map (_*_ x) ys) +p_)  (*p-comm xs (y ∷ ys))) ⟩
+  ≡⟨ cong (x * y ∷_) (cong ((map (_*_ x) ys) +p_)  (*p-comm xs (y ∷ ys))) ⟩
    x * y ∷ (map (_*_ x) ys +p ((y ∷ ys) *p xs))
   ≡⟨ cong (x * y ∷_) (cong ((map (_*_ x) ys) +p_)  (*p-map-proof y ys xs )) ⟩
     x * y ∷ (map (_*_ x) ys +p (map (y *_) xs +p (+0 ∷ (ys *p xs))))
@@ -448,7 +457,7 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
 ...                   | true = refl
 ...                   | false =
                          begin
-                           let m = ((length xs / 2) ⊓ (length ys / 2)) in
+                            let m = ((length xs / 2) ⊓ (length ys / 2)) in
                            let (b , a) = splitAt m xs in
                            let (d , c) = splitAt m ys in
                            let ac = karatsuba' n a c in 
@@ -460,7 +469,7 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                          ≡⟨ sym (*p-+p-distrib-r b (shiftRight m a) (d +p shiftRight m c)) ⟩
                            (b *p (d +p shiftRight m c)) +p ((shiftRight m a) *p (d +p shiftRight m c))
                          ≡⟨ cong₂ (_+p_) (sym (*p-+p-distrib-l b d (shiftRight m c))) (sym (*p-+p-distrib-l (shiftRight m a) d (shiftRight m c))) ⟩
-                           ((b *p d) +p (b *p (shiftRight m c))) +p (((shiftRight m a) *p d) +p (shiftRight m a *p shiftRight m c))
+                            ((b *p d) +p (b *p (shiftRight m c))) +p (((shiftRight m a) *p d) +p (shiftRight m a *p shiftRight m c))
                          ≡⟨ +p-rearrange (b *p d) (b *p (shiftRight m c)) ((shiftRight m a) *p d)  (shiftRight m a *p shiftRight m c) ⟩          
                            ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
                          ≡⟨ cong (((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p_) ({!!} ) ⟩
