@@ -442,6 +442,11 @@ lengthseven xs [] rewrite +pRightEmpty xs | Data.Nat.Properties.⊔-identityʳ (
 lengthseven (x ∷ xs) (y ∷ ys) rewrite lengthseven xs ys = refl  
 
 
+length-map : ∀ (x : ℤ) (xs : List ℤ)
+  → length xs ≡ length (map (x *_) xs)
+length-map x [] = refl
+length-map x (y ∷ ys) rewrite length-map x ys = refl  
+
 
 
 
@@ -460,9 +465,6 @@ shiftRight-zero-*p (x ∷ xs) =
   ∎
 
 
---
-
-
 
 shiftRight-shiftRight : ∀ (m n : ℕ) (xs  : List ℤ)
   → shiftRight m (shiftRight n xs) ≡ shiftRight (m +ℕ n) xs
@@ -476,6 +478,23 @@ shiftRight-+p zero xs ys = refl
 shiftRight-+p (ℕ.suc m) xs ys rewrite shiftRight-+p  m xs ys = refl
 
 
-
-
-
+shiftRight-len : ∀ (m : ℕ) 
+  → length (shiftRight m []) ≡ m
+shiftRight-len zero = refl
+shiftRight-len (ℕ.suc m) rewrite shiftRight-len m = refl 
+  
+shiftRight-list-len : ∀ (m : ℕ) (xs : List ℤ)
+  → length (shiftRight m xs) ≡ length xs +ℕ m 
+shiftRight-list-len zero xs  rewrite Data.Nat.Properties.+-identityʳ (length xs) = refl   
+shiftRight-list-len (ℕ.suc m) xs =  
+  begin
+    ℕ.suc (length (shiftRight m xs)) --length (shiftRight m xs)
+  ≡⟨ cong ℕ.suc (shiftRight-list-len m xs) ⟩
+    ℕ.suc (length xs +ℕ m)
+  ≡⟨ cong ℕ.suc (Data.Nat.Properties.+-comm (length xs) m) ⟩
+    ℕ.suc (m +ℕ length xs)
+  ≡⟨⟩
+    ℕ.suc m +ℕ length xs
+  ≡⟨ Data.Nat.Properties.+-comm (ℕ.suc m) (length xs) ⟩
+    length xs +ℕ ℕ.suc m
+  ∎
