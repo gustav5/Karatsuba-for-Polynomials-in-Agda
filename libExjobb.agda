@@ -75,6 +75,10 @@ _*p_ [] ys = []
 _*p_ xs [] = []
 _*p_ (x ∷ xs) ys = (map (x *_) ys) +p ( +0 ∷  xs *p ys)
 
+_p'_ : List ℤ → List ℤ → List ℤ
+_p'_ [] ys = []
+_p'_ xs [] = []
+_p'_ (x ∷ xs) (y ∷ ys) = (x * y) ∷ ((map (x *_) ys) +p (map (y *_) xs)) +p (+0 ∷ (xs p' ys))
 
 negPoly : List ℤ → List ℤ
 negPoly [] = []
@@ -432,6 +436,58 @@ map-shiftRight-zero (y ∷ ys) =
      (x + y) * z + +0 ∷ (map (_*_ (x + y)) zs +p ((xs +p ys) *p (z ∷ zs)))
    ∎
 
+-- properties of new *p
+
+*p-identity-r : ∀ (xs : List ℤ)
+  → xs p' [] ≡ []
+*p-identity-r [] = refl 
+*p-identity-r (x ∷ xs) = refl
+
+*p-identity-l : ∀ (xs : List ℤ)
+  → [] p' xs  ≡ []
+*p-identity-l [] = refl 
+*p-identity-l (x ∷ xs) = refl
+
+*p-comm' : ∀ (xs ys : List ℤ)
+  → xs p' ys ≡ ys p' xs
+*p-comm' [] ys   rewrite *p-identity-r ys = refl  
+*p-comm' xs []  rewrite *p-identity-r xs = refl   
+*p-comm' (x ∷ xs) (y ∷ ys) = 
+  begin
+    x * y ∷ ((map (_*_ x) ys +p map (_*_ y) xs) +p (+0 ∷ (xs p' ys)))
+  ≡⟨ cong (_∷ ((map (_*_ x) ys +p map (_*_ y) xs) +p (+0 ∷ (xs p' ys)))) (*-comm x y) ⟩
+    y * x ∷ ((map (_*_ x) ys +p map (_*_ y) xs) +p (+0 ∷ (xs p' ys)))
+  ≡⟨ cong (y * x ∷_) (cong (_+p (+0 ∷ (xs p' ys)))  (+p-comm (map (_*_ x) ys) (map (_*_ y) xs))) ⟩
+    y * x ∷  ((map (_*_ y) xs +p map (_*_ x) ys) +p (+0 ∷ (xs p' ys)))
+  ≡⟨ cong (y * x ∷_) (cong ((map (_*_ y) xs +p map (_*_ x) ys) +p_) (cong (+0 ∷_) (*p-comm' xs ys)))  ⟩
+    y * x ∷ ((map (_*_ y) xs +p map (_*_ x) ys) +p (+0 ∷ (ys p' xs)))
+  ∎
+
+*p-dist-+p-l : ∀ (xs ys zs : List ℤ)
+  → (xs p' ys) +p (xs p' zs) ≡ xs p' (ys +p zs)
+*p-dist-+p-l [] ys zs = refl
+*p-dist-+p-l xs [] zs rewrite *p-identity-r xs | +pLeftEmpty (xs p' zs) | +pLeftEmpty zs = refl  
+*p-dist-+p-l xs ys [] rewrite *p-identity-r xs | +pRightEmpty ys | +pRightEmpty (xs p' ys) = refl   
+*p-dist-+p-l (x ∷ xs) (y ∷ ys) (z ∷ zs) = 
+  begin
+    x * y + x * z ∷ (((map (_*_ x) ys +p map (_*_ y) xs) +p (+0 ∷ (xs p' ys))) +p ((map (_*_ x) zs +p map (_*_ z) xs) +p (+0 ∷ (xs p' zs))))
+  ≡⟨ cong₂ (_∷_) (sym (*-distribˡ-+ x y z)) (+p-assoc-two (map (_*_ x) ys +p map (_*_ y) xs) (+0 ∷ (xs p' ys)) (map (_*_ x) zs +p map (_*_ z) xs) (+0 ∷ (xs p' zs))) ⟩
+    x * (y + z) ∷ (((map (_*_ x) ys +p map (_*_ y) xs) +p  (map (_*_ x) zs +p map (_*_ z) xs)) +p (+0 ∷ ((xs p' ys) +p (xs p' zs))))
+  ≡⟨ cong (x * (y + z) ∷_) (cong (_+p (+0 ∷ ((xs p' ys) +p (xs p' zs)))) (+p-assoc-two (map (_*_ x) ys) (map (_*_ y) xs) (map (_*_ x) zs) (map (_*_ z) xs))) ⟩
+    x * (y + z) ∷  (((map (_*_ x) ys +p map (_*_ x) zs) +p (map (_*_ y) xs +p map (_*_ z) xs)) +p (+0 ∷ ((xs p' ys) +p (xs p' zs))))
+  ≡⟨ cong (x * (y + z) ∷_) (cong (_+p (+0 ∷ ((xs p' ys) +p (xs p' zs)))) (cong₂ (_+p_) (map-+p-distrib x ys zs) (map-+p-dist-two y z xs))) ⟩  
+    x * (y + z) ∷ ((map (_*_ x) (ys +p zs) +p map (_*_ (y + z)) xs) +p (+0 ∷ ((xs p' ys) +p (xs p' zs))))
+  ≡⟨ cong (x * (y + z) ∷_) (cong ((map (_*_ x) (ys +p zs) +p map (_*_ (y + z)) xs) +p_) (cong (+0 ∷_ ) (*p-dist-+p-l xs ys zs))) ⟩
+     x * (y + z) ∷ ((map (_*_ x) (ys +p zs) +p map (_*_ (y + z)) xs) +p (+0 ∷ (xs p' (ys +p zs))))
+  ∎
+
+*p-dist-+p-r : ∀ (xs ys zs : List ℤ)
+  →  (xs +p ys) p' zs ≡ (xs p' zs) +p (ys p' zs)
+*p-dist-+p-r xs ys zs rewrite *p-comm' (xs +p ys) zs | sym (*p-dist-+p-l zs xs ys) | *p-comm' zs xs | *p-comm' zs ys = refl 
+
+
+
+
 
 --properties of length
 
@@ -446,6 +502,22 @@ length-map : ∀ (x : ℤ) (xs : List ℤ)
   → length xs ≡ length (map (x *_) xs)
 length-map x [] = refl
 length-map x (y ∷ ys) rewrite length-map x ys = refl  
+
+
+lengthfive : ∀ (y : ℤ) (ys : List ℤ)
+  → length ys <ℕ length (y ∷ ys)
+lengthfive y [] = Data.Nat.z<s
+lengthfive y1 (y2 ∷ ys) =  Data.Nat.s<s Data.Nat.Properties.≤-refl
+
+lengthnine : ∀ (y : ℤ)  
+  → zero <ℕ length ([ y ]) 
+lengthnine y =  Data.Nat.z<s
+
+
+length-single : ∀ (x : ℤ) (ys : List ℤ)
+  → length ([ x ] *p ys) ≡ length ys 
+length-single x [] = refl
+length-single x (y ∷ ys) rewrite length-map x ys | +pRightEmpty (map (x *_) ys) = refl  
 
 
 
