@@ -5,7 +5,7 @@ open import Data.Nat renaming( _*_ to _*ℕ_)   --using (ℕ; zero; suc; _⊓_; 
 open import Data.Nat.Properties renaming(*-comm to *-commℕ)
 open import Data.Bool using (Bool; true; false; T; _∧_; _∨_; not)
 open import Data.Integer  using (ℤ;+0;_*_) renaming (_+_ to _+ℤ_; -_ to -i_) 
-open import Data.Integer.Properties renaming (*-zeroʳ to *-zeroʳℤ;*-zeroˡ to *-zeroˡℤ;+-inverseʳ to +-inverseʳℤ; +-identityʳ to +-identityʳℤ;+-identityˡ to +-identityˡℤ;+-comm to +-commℤ;*-distribʳ-+ to *-distribʳ-+ℤ;*-distribˡ-+ to *-distribˡ-+ℤ;≤-refl to ≤-reflℤ;+-assoc to +-assocℤ)
+open import Data.Integer.Properties hiding(_≤?_;≰⇒>;_<?_;m≤n⇒m⊔n≡n;≤-reflexive;<⇒≤;m≤n⇒m⊓n≡m) renaming (*-zeroʳ to *-zeroʳℤ;*-zeroˡ to *-zeroˡℤ;+-inverseʳ to +-inverseʳℤ; +-identityʳ to +-identityʳℤ;+-identityˡ to +-identityˡℤ;+-comm to +-commℤ;*-distribʳ-+ to *-distribʳ-+ℤ;*-distribˡ-+ to *-distribˡ-+ℤ;≤-refl to ≤-reflℤ;+-assoc to +-assocℤ)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Level using (Level)
@@ -328,6 +328,21 @@ split-p-new (ℕ.suc m) (y ∷ ys) (s≤s m≤xs) =
     y +ℤ +0 ∷ (take m ys +p shiftRight m (drop m ys)) 
   ∎
 
+  
+split-p : ∀ (m : ℕ) (xs : List ℤ)
+  → (m) ≤ (length xs)
+  → xs ≡ take m xs +p (shiftRight m (drop m xs))
+split-p zero xs m≤xs rewrite takeZero xs | dropZero xs | +pLeftEmpty xs = refl
+split-p (ℕ.suc m) (y ∷ ys) (s≤s m≤xs) =
+  begin
+    y ∷ ys
+  ≡⟨ cong (_∷ ys) (sym (+-identityʳℤ y)) ⟩
+    y +ℤ +0 ∷ ys
+  ≡⟨ cong (y +ℤ +0 ∷_) ( split-p m ys m≤xs ) ⟩
+    y +ℤ +0 ∷ (take m ys +p shiftRight m (drop m ys))
+  ∎
+
+
 --properties of *p
 
 --identity
@@ -613,3 +628,86 @@ shiftRight-list-len (ℕ.suc m) xs =
 *p≡p' (x ∷ xs) (y ∷ ys) = {!!}
 
 -}
+
+
+
+
+lemmaLen : ∀ (xs ys : List ℤ)
+  → length ys ≤ length xs
+  → (xs +p ys) -p ys ≡ xs
+lemmaLen xs [] xs≥ys rewrite +pRightEmpty xs | +pRightEmpty xs = refl
+lemmaLen (x ∷ xs) (y ∷ ys) (s≤s ys≤xs) =
+  begin
+    ((x +ℤ y ∷ (xs +p ys)) -p (y ∷ ys))
+  ≡⟨⟩
+    (x +ℤ y) +ℤ ( -i y) ∷ (xs +p ys) -p ys
+  ≡⟨ cong (_∷ ((xs +p ys) -p ys)) (+-assocℤ x y (-i y)) ⟩
+    (x +ℤ (y +ℤ -i y)) ∷ ((xs +p ys) -p ys)
+  ≡⟨ cong (λ z → ((x +ℤ (z)) ∷ ((xs +p ys) -p ys))) (+-inverseʳℤ y) ⟩
+    x +ℤ +0 ∷ ((xs +p ys) -p ys)
+  ≡⟨ cong (_∷ ((xs +p ys) -p ys)) (+-identityʳℤ x) ⟩
+    x  ∷ (xs +p ys) -p ys
+  ≡⟨ cong (x ∷_) (+p-assoc xs ys (negPoly ys) ) ⟩
+    x ∷ (xs +p (ys -p ys))
+  ≡⟨ cong (x ∷_ ) (cong (xs +p_) (negPoly-lemma  ys)) ⟩
+    x ∷ (xs +p shiftRight (length ys) [])
+  ≡⟨ cong (x ∷_) (+p-comm xs (shiftRight (length ys) [])) ⟩
+    x ∷ (shiftRight (length ys) [] +p xs)
+  ≡⟨ cong (x ∷_) (addZeroes (length ys) xs ys≤xs)  ⟩
+    x ∷ xs
+  ∎ 
+
+
+
+
+-----------------------
+
+x+y≡x⊔y : ∀ (xs ys : List ℤ)
+  → length (xs +p ys) ≡ length xs ⊔ length ys
+x+y≡x⊔y [] ys rewrite +pLeftEmpty ys = refl
+x+y≡x⊔y xs [] rewrite +pRightEmpty xs | Data.Nat.Properties.⊔-identityʳ (length xs) = refl  
+x+y≡x⊔y (x ∷ xs) (y ∷ ys) rewrite x+y≡x⊔y xs ys = refl  
+
+length-*p : ∀ (xs ys : List ℤ) 
+  → zero < length xs
+  → zero < length ys
+  → length ys ≤ length (xs *p ys)
+length-*p (x ∷ xs) ys z<xs z<ys  rewrite *p-map-proof x xs ys z<ys | x+y≡x⊔y (map (x *_) ys) ( +0 ∷ (xs *p ys)) | sym (length-map x ys) = m≤n⇒m≤n⊔o (suc (length (xs *p ys))) (≤-reflexive refl)
+
+zero<lensR : ∀ (m : ℕ) (xs : List ℤ)
+  → zero < length xs
+  → zero < length (shiftRight m xs)
+zero<lensR m xs z<xs rewrite shiftRight-list-len m xs = ≤-stepsʳ m z<xs    
+
+length-lemma : ∀ (m : ℕ) (y : ℤ) (xs ys : List ℤ)
+  → zero < length xs
+  →   length ys  < length ((shiftRight m xs) *p (y ∷ ys)) 
+length-lemma  m y xs ys z<xs  =  length-*p (shiftRight m xs) (y ∷ ys)  (zero<lensR m xs z<xs) z<s 
+
+shiftRight-*p : ∀ (m : ℕ) (xs ys : List ℤ)
+  → zero < length xs
+  → zero < length ys
+  →  shiftRight m (xs *p ys) ≡ (shiftRight m xs) *p ys
+shiftRight-*p zero xs ys zero<lenXS zero<lenYS = refl
+shiftRight-*p (ℕ.suc m) (x ∷ xs) (y ∷ ys) z<xs z<ys =
+           begin
+              +0 ∷ shiftRight m ((x ∷ xs) *p (y ∷ ys))
+            ≡⟨ cong (+0 ∷_) (shiftRight-*p m (x ∷ xs) (y ∷ ys) z<xs z<ys) ⟩
+              +0 ∷ ((shiftRight m (x ∷ xs)) *p (y ∷ ys) ) 
+            ≡⟨ cong (+0 ∷_) (equality) ⟩ 
+               (+0 ∷ (shiftRight m (x ∷ xs))) *p (y ∷ ys) 
+             ∎
+             where
+              equality : (shiftRight m (x ∷ xs) *p (y ∷ ys)) ≡  (map (_*_ +0) ys +p (shiftRight m (x ∷ xs) *p (y ∷ ys)))
+              equality = begin
+                       (shiftRight m (x ∷ xs) *p (y ∷ ys))
+                     ≡⟨ sym (addZeroes (length ys) (shiftRight m (x ∷ xs) *p (y ∷ ys)) (<⇒≤ (length-lemma  m y (x ∷ xs) ys z<xs ))) ⟩
+                       shiftRight (length ys) [] +p (shiftRight m (x ∷ xs) *p (y ∷ ys))
+                     ≡⟨ cong (_+p (shiftRight m (x ∷ xs) *p (y ∷ ys))) (sym (map-shiftRight-zero ys)) ⟩
+                         (map (_*_ +0) ys +p (shiftRight m (x ∷ xs) *p (y ∷ ys)))
+                     ∎
+
+
+
+
+
