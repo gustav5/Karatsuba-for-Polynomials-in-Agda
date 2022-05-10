@@ -1,13 +1,11 @@
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans; cong; cong₂; cong-app)
 open Eq.≡-Reasoning
-open import Data.Nat using (ℕ; zero; suc; _⊓_; _⊔_ ;z≤n; s≤s;z<s;s<s) renaming( _*_ to _*ℕ_ ;_+_ to _+ℕ_;_<?_ to _<?ℕ_; _≤?_ to  _≤?ℕ_; _≤_ to _≤ℕ_; _<_ to _<ℕ_;_≥_ to  _≥ℕ_ )
-open import Data.Nat.Base using (_/_)
-open import Data.Nat.Properties using (⊓-zeroʳ; m≤n⇒m⊓n≡m )
-open import Data.Nat.DivMod
+open import Data.Nat renaming( _*_ to _*ℕ_)   --using (ℕ; zero; suc; _⊓_; _⊔_ ;z≤n; s≤s;z<s;s<s) renaming( _*_ to _*ℕ_ ;_+_ to _+ℕ_;_<?_ to _<?ℕ_; _≤?_ to  _≤?ℕ_; _≤_ to _≤ℕ_; _<_ to _<ℕ_;_≥_ to  _≥ℕ_ ) hiding (-)
+open import Data.Nat.Properties renaming(*-comm to *-commℕ)
 open import Data.Bool using (Bool; true; false; T; _∧_; _∨_; not)
-open import Data.Integer.Base hiding (_⊓_;_/_;_⊔_) 
-open import Data.Integer.Properties  
+open import Data.Integer  using (ℤ;+0;_*_) renaming (_+_ to _+ℤ_; -_ to -i_) 
+open import Data.Integer.Properties renaming (*-zeroʳ to *-zeroʳℤ;*-zeroˡ to *-zeroˡℤ;+-inverseʳ to +-inverseʳℤ; +-identityʳ to +-identityʳℤ;+-identityˡ to +-identityˡℤ;+-comm to +-commℤ;*-distribʳ-+ to *-distribʳ-+ℤ;*-distribˡ-+ to *-distribˡ-+ℤ;≤-refl to ≤-reflℤ;+-assoc to +-assocℤ)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Level using (Level)
@@ -68,7 +66,7 @@ _+p_ : List ℤ → List ℤ → List ℤ
 [] +p [] = []
 xs +p [] = xs
 [] +p ys = ys
-(x ∷ xs) +p (y ∷ ys) = x + y ∷ (xs +p ys) 
+(x ∷ xs) +p (y ∷ ys) = x +ℤ y ∷ (xs +p ys) 
 
 _*p_ : List ℤ → List ℤ → List ℤ
 _*p_ [] ys = []
@@ -82,7 +80,7 @@ _p'_ (x ∷ xs) (y ∷ ys) = (x * y) ∷ ((map (x *_) ys) +p (map (y *_) xs)) +p
 
 negPoly : List ℤ → List ℤ
 negPoly [] = []
-negPoly (x ∷ xs) = (- x) ∷ negPoly xs
+negPoly (x ∷ xs) = (-i x) ∷ negPoly xs
 
 _-p_ : List ℤ → List ℤ → List ℤ
 _-p_ xs ys = xs +p (negPoly ys)
@@ -115,11 +113,11 @@ zero ≤ᵇ' n       =  true
 suc m ≤ᵇ' zero   =  false
 suc m ≤ᵇ' suc n  =  m ≤ᵇ' n
 
-a : List ℤ
-a = [ + 2 ]
+-- a : List ℤ
+-- a = [ + 2 ]
 
-b : List ℤ
-b = [ + 1 , + 2   ]
+-- b : List ℤ
+-- b = [ + 1 , + 2   ]
 
 
 
@@ -128,8 +126,8 @@ b = [ + 1 , + 2   ]
 -------------- working help functions
 
 
-+-rearrange : ∀ (m n p q : ℤ) → (m + n) + (p + q) ≡ m + (n + p) + q
-+-rearrange m n p q rewrite +-assoc m n (p + q) | (sym (+-assoc n p q)) | sym (+-assoc m (n + p) q) = refl
++-rearrange : ∀ (m n p q : ℤ) → (m +ℤ n) +ℤ (p +ℤ q) ≡ m +ℤ (n +ℤ p) +ℤ q
++-rearrange m n p q rewrite +-assocℤ m n (p +ℤ q) | (sym (+-assocℤ n p q)) | sym (+-assocℤ m (n +ℤ p) q) = refl
 
 shiftRightZero : ∀ (xs : List ℤ)
   → shiftRight zero xs ≡ xs
@@ -167,8 +165,8 @@ splitAt-n n x xs = refl
 
 addOne : ∀ (x : ℤ) (xs : List ℤ)
   →  x ∷ xs ≡ [ x ] +p (+0 ∷ xs) 
-addOne x [] rewrite +-identityʳ x = refl
-addOne x (y ∷ ys) rewrite +-identityʳ x = refl
+addOne x [] rewrite +-identityʳℤ x = refl
+addOne x (y ∷ ys) rewrite +-identityʳℤ x = refl
 
 takeFstSplit : ∀ m xs
   → take m xs ≡ Pair.fst (splitAt m xs) 
@@ -210,11 +208,11 @@ shiftRightDrop (suc m) (x ∷ xs) = refl
 +p-assoc xs ys [] rewrite +pRightEmpty (xs +p ys) | +pRightEmpty ys = refl
 +p-assoc (x ∷ xs) (y ∷ ys) (z ∷ zs) =
   begin
-    x + y + z ∷ ((xs +p ys) +p zs) 
-  ≡⟨ cong ((x + y + z) ∷_) (+p-assoc xs ys zs) ⟩
-     x + y + z ∷ (xs +p (ys +p zs))
-   ≡⟨ cong (_∷ (xs +p (ys +p zs))) (+-assoc x y z) ⟩
-     x + (y + z) ∷ (xs +p (ys +p zs))
+    x +ℤ y +ℤ z ∷ ((xs +p ys) +p zs) 
+  ≡⟨ cong ((x +ℤ y +ℤ z) ∷_) (+p-assoc xs ys zs) ⟩
+     x +ℤ y +ℤ z ∷ (xs +p (ys +p zs))
+   ≡⟨ cong (_∷ (xs +p (ys +p zs))) (+-assocℤ x y z) ⟩
+     x +ℤ (y +ℤ z) ∷ (xs +p (ys +p zs))
    ∎
 
 --commutativity
@@ -224,11 +222,11 @@ shiftRightDrop (suc m) (x ∷ xs) = refl
 +p-comm (x ∷ xs) [] = refl
 +p-comm (x ∷ xs) (y ∷ ys) =
   begin
-    x + y ∷ (xs +p ys)
-  ≡⟨ cong ((x + y) ∷_) (+p-comm xs ys) ⟩
-    x + y ∷ (ys +p xs)
-  ≡⟨ cong (_∷ (ys +p xs)) (+-comm x y) ⟩
-    y + x ∷ (ys +p xs)
+    x +ℤ y ∷ (xs +p ys)
+  ≡⟨ cong ((x +ℤ y) ∷_) (+p-comm xs ys) ⟩
+    x +ℤ y ∷ (ys +p xs)
+  ≡⟨ cong (_∷ (ys +p xs)) (+-commℤ x y) ⟩
+    y +ℤ x ∷ (ys +p xs)
   ∎
 
 --rearrange
@@ -247,18 +245,18 @@ shiftRightDrop (suc m) (x ∷ xs) = refl
 +p-assoc-two xs [] zs rs rewrite +pRightEmpty xs | sym (+p-assoc xs zs rs) | +pLeftEmpty rs = refl   
 +p-assoc-two xs ys [] rs rewrite +pLeftEmpty rs | +p-assoc xs ys rs | +pRightEmpty xs = refl 
 +p-assoc-two xs ys zs [] rewrite +pRightEmpty zs | +p-comm xs ys | +p-assoc ys xs zs | +p-comm ys (xs +p zs) | +pRightEmpty ys = refl
-+p-assoc-two ( x ∷ xs) (y ∷ ys) (z ∷ zs) (r ∷ rs)  rewrite +p-assoc-two xs ys zs rs | +-rearrange x y z r | +-comm y z | sym (+-rearrange x z y r) = refl 
++p-assoc-two ( x ∷ xs) (y ∷ ys) (z ∷ zs) (r ∷ rs)  rewrite +p-assoc-two xs ys zs rs | +-rearrange x y z r | +-commℤ y z | sym (+-rearrange x z y r) = refl 
 
 map-+p-dist-two : ∀  (x y : ℤ)  (zs : List ℤ)
-  → (map (x *_) zs) +p (map (y *_) zs) ≡ map ((x + y) *_) zs
+  → (map (x *_) zs) +p (map (y *_) zs) ≡ map ((x +ℤ y) *_) zs
 map-+p-dist-two x y []  = refl
 map-+p-dist-two x y (z ∷ zs) =
   begin
-    x * z + y * z ∷ (map (_*_ x) zs +p map (_*_ y) zs)
-  ≡⟨ cong (_∷ (map (_*_ x) zs +p map (_*_ y) zs)) (sym (*-distribʳ-+ z x y)) ⟩
-    (x + y) * z ∷ (map (_*_ x) zs +p map (_*_ y) zs)
-  ≡⟨ cong ((x + y) * z ∷_) (map-+p-dist-two x y zs) ⟩
-    (x + y) * z ∷ map (_*_ (x + y)) zs
+    x * z +ℤ y * z ∷ (map (_*_ x) zs +p map (_*_ y) zs)
+  ≡⟨ cong (_∷ (map (_*_ x) zs +p map (_*_ y) zs)) (sym (*-distribʳ-+ℤ z x y)) ⟩
+    (x +ℤ y) * z ∷ (map (_*_ x) zs +p map (_*_ y) zs)
+  ≡⟨ cong ((x +ℤ y) * z ∷_) (map-+p-dist-two x y zs) ⟩
+    (x +ℤ y) * z ∷ map (_*_ (x +ℤ y)) zs
   ∎
 map-+p-distrib : ∀  (x : ℤ)  (xs ys : List ℤ)
   → map (x *_) xs +p map (x *_) ys ≡ map (x *_) (xs +p ys)
@@ -266,15 +264,15 @@ map-+p-distrib x [] ys rewrite +pLeftEmpty (map (x *_) ys) | +pLeftEmpty ys = re
 map-+p-distrib x xs [] rewrite  +pRightEmpty (map (x *_) xs) | +pRightEmpty xs = refl
 map-+p-distrib x (y ∷ ys) (z ∷ zs) =
   begin
-    x * y + x * z ∷ (map (_*_ x) ys +p map (_*_ x) zs)
-  ≡⟨ cong (_∷ (map (_*_ x) ys +p map (_*_ x) zs)) (sym (*-distribˡ-+ x y z)) ⟩
-    x * (y + z) ∷ (map (_*_ x) ys +p map (_*_ x) zs) 
-  ≡⟨ cong ((x * (y + z)) ∷_) (map-+p-distrib x ys zs) ⟩
-    x * (y + z) ∷ map (x *_) (ys +p zs)
+    x * y +ℤ x * z ∷ (map (_*_ x) ys +p map (_*_ x) zs)
+  ≡⟨ cong (_∷ (map (_*_ x) ys +p map (_*_ x) zs)) (sym (*-distribˡ-+ℤ x y z)) ⟩
+    x * (y +ℤ z) ∷ (map (_*_ x) ys +p map (_*_ x) zs) 
+  ≡⟨ cong ((x * (y +ℤ z)) ∷_) (map-+p-distrib x ys zs) ⟩
+    x * (y +ℤ z) ∷ map (x *_) (ys +p zs)
   ∎
 
 addZeroes : ∀ (m : ℕ) (xs : List ℤ)       
-   → (m) ≤ℕ (length xs)          
+   → (m) ≤ (length xs)          
    →  shiftRight m [] +p xs ≡ xs
 addZeroes  zero  xs m≤xs = 
   begin
@@ -287,8 +285,8 @@ addZeroes (ℕ.suc m) (y ∷ ys) (s≤s m≤xs) =
   begin
     ((+0 ∷ shiftRight m []) +p (y ∷ ys))
   ≡⟨⟩
-    +0 + y ∷ (shiftRight m [] +p ys)
-  ≡⟨ cong (_∷ (shiftRight m [] +p ys)) (+-identityˡ y) ⟩
+    +0 +ℤ y ∷ (shiftRight m [] +p ys)
+  ≡⟨ cong (_∷ (shiftRight m [] +p ys)) (+-identityˡℤ y) ⟩
     y ∷ (shiftRight m [] +p ys)
   ≡⟨ cong (y ∷_) ( addZeroes m ys m≤xs ) ⟩ 
     y ∷ ys
@@ -300,8 +298,8 @@ negPoly-lemma : ∀ (xs : List ℤ)
 negPoly-lemma [] = refl
 negPoly-lemma (x ∷ xs) =
   begin
-     x + - x ∷ (xs +p negPoly xs)  --help max
-  ≡⟨ cong (_∷ (xs +p negPoly xs)) (+-inverseʳ x) ⟩
+     x +ℤ -i x ∷ (xs +p negPoly xs)  --help max
+  ≡⟨ cong (_∷ (xs +p negPoly xs)) (+-inverseʳℤ x) ⟩
     +0 ∷ (xs +p negPoly xs)
   ≡⟨ cong (+0 ∷_) (negPoly-lemma xs) ⟩
     +0 ∷ shiftRight (length xs) []
@@ -322,12 +320,12 @@ split-p-new zero xs m≤xs =
 split-p-new (ℕ.suc m) (y ∷ ys) (s≤s m≤xs) =  
   begin
     y ∷ ys
-  ≡⟨ cong (_∷ ys) (sym (+-identityʳ y)) ⟩
-    y + +0 ∷ ys
-  ≡⟨ cong (y + +0 ∷_) ( split-p-new m ys m≤xs ) ⟩
-    y + +0 ∷ (Pair.fst (splitAt m ys) +p shiftRight m (Pair.snd (splitAt m ys)))
-   ≡⟨ cong (y + +0 ∷_) (cong₂ (_+p_) (sym (takeFstSplit m ys)) (shiftRightDrop m ys)) ⟩
-    y + +0 ∷ (take m ys +p shiftRight m (drop m ys)) 
+  ≡⟨ cong (_∷ ys) (sym (+-identityʳℤ y)) ⟩
+    y +ℤ +0 ∷ ys
+  ≡⟨ cong (y +ℤ +0 ∷_) ( split-p-new m ys m≤xs ) ⟩
+    y +ℤ +0 ∷ (Pair.fst (splitAt m ys) +p shiftRight m (Pair.snd (splitAt m ys)))
+   ≡⟨ cong (y +ℤ +0 ∷_) (cong₂ (_+p_) (sym (takeFstSplit m ys)) (shiftRightDrop m ys)) ⟩
+    y +ℤ +0 ∷ (take m ys +p shiftRight m (drop m ys)) 
   ∎
 
 --properties of *p
@@ -356,10 +354,10 @@ split-p-new (ℕ.suc m) (y ∷ ys) (s≤s m≤xs) =
   ≡⟨⟩
     (x * y ∷ map (x *_) ys) +p [ +0 ] 
   ≡⟨⟩
-    x * y + +0 ∷ (map (x *_) ys) +p []
-  ≡⟨ cong ((x * y + +0) ∷_) (+pRightEmpty (map (x *_) ys)) ⟩
-    x * y + +0 ∷ map (x *_) ys
-  ≡⟨ cong ( _∷ map (x *_) ys) (+-identityʳ (x * y)) ⟩
+    x * y +ℤ +0 ∷ (map (x *_) ys) +p []
+  ≡⟨ cong ((x * y +ℤ +0) ∷_) (+pRightEmpty (map (x *_) ys)) ⟩
+    x * y +ℤ +0 ∷ map (x *_) ys
+  ≡⟨ cong ( _∷ map (x *_) ys) (+-identityʳℤ (x * y)) ⟩
    x * y ∷ map (x *_) ys
   ∎
 
@@ -371,7 +369,7 @@ map-shiftRight-zero (y ∷ ys) =
     map (+0 *_) (y ∷ ys)
   ≡⟨⟩
      (+0 * y) ∷ map (+0 *_) ys
-  ≡⟨ cong (_∷ (map (+0 *_) ys)) (*-zeroˡ y) ⟩
+  ≡⟨ cong (_∷ (map (+0 *_) ys)) (*-zeroˡℤ y) ⟩
     +0  ∷ map (+0 *_) ys
   ≡⟨ cong (+0 ∷_) (map-shiftRight-zero ys) ⟩
     +0 ∷  shiftRight (length ys) []
@@ -390,11 +388,11 @@ map-shiftRight-zero (y ∷ ys) =
   ≡⟨ +p-assoc-two (map (x *_) (y ∷ ys)) (+0 ∷ xs *p (y ∷ ys)) (map (x *_) (z ∷ zs))  (+0 ∷ xs *p (z ∷ zs)) ⟩
     ((map (x *_) (y ∷ ys)) +p (map (x *_) (z ∷ zs))) +p ((+0 ∷ xs *p (y ∷ ys)) +p (+0 ∷ xs *p (z ∷ zs)))
   ≡⟨ cong (_+p ((+0 ∷ xs *p (y ∷ ys)) +p (+0 ∷ xs *p (z ∷ zs)))) (map-+p-distrib x (y ∷ ys) (z ∷ zs)) ⟩
-    map (x *_) ((y + z) ∷ (ys +p zs)) +p ((+0 ∷ (xs *p (y ∷ ys))) +p (+0 ∷( xs *p (z ∷ zs))))
+    map (x *_) ((y +ℤ z) ∷ (ys +p zs)) +p ((+0 ∷ (xs *p (y ∷ ys))) +p (+0 ∷( xs *p (z ∷ zs))))
   ≡⟨⟩
-    map (x *_) ((y + z) ∷ (ys +p zs)) +p (+0 ∷ ((xs *p (y ∷ ys)) +p ( xs *p (z ∷ zs))))
-  ≡⟨ cong ((map (x *_) ((y + z) ∷ (ys +p zs))) +p_) (cong (+0 ∷_) (*p-+p-distrib-l xs (y ∷ ys) (z ∷ zs))) ⟩
-    map (x *_) ((y + z) ∷ (ys +p zs)) +p (+0 ∷ (xs *p ((y ∷ ys) +p (z ∷ zs))))
+    map (x *_) ((y +ℤ z) ∷ (ys +p zs)) +p (+0 ∷ ((xs *p (y ∷ ys)) +p ( xs *p (z ∷ zs))))
+  ≡⟨ cong ((map (x *_) ((y +ℤ z) ∷ (ys +p zs))) +p_) (cong (+0 ∷_) (*p-+p-distrib-l xs (y ∷ ys) (z ∷ zs))) ⟩
+    map (x *_) ((y +ℤ z) ∷ (ys +p zs)) +p (+0 ∷ (xs *p ((y ∷ ys) +p (z ∷ zs))))
   ∎
 
 *p-+p-distrib-r : ∀ (xs ys zs : List ℤ)
@@ -431,10 +429,35 @@ map-shiftRight-zero (y ∷ ys) =
   ≡⟨ +p-assoc-two (map (x *_) (z ∷ zs)) (+0 ∷ xs *p (z ∷ zs)) (map (y *_) (z ∷ zs))  (+0 ∷ ys *p (z ∷ zs)) ⟩
    ((map (x *_) (z ∷ zs)) +p (map (y *_) (z ∷ zs))) +p ((+0 ∷ xs *p (z ∷ zs)) +p (+0 ∷ ys *p (z ∷ zs)))
   ≡⟨ cong (_+p ((+0 ∷ xs *p (z ∷ zs)) +p (+0 ∷ ys *p (z ∷ zs)))) (map-+p-dist-two  x y (z ∷ zs)) ⟩
-    (x + y) * z + +0 ∷ (map (_*_ (x + y)) zs +p ((xs *p (z ∷ zs)) +p (ys *p (z ∷ zs))))
-  ≡⟨ cong ( (x + y) * z + +0 ∷_) (cong (map (_*_ (x + y)) zs +p_) (*p-+p-distrib-r xs ys (z ∷ zs))) ⟩
-     (x + y) * z + +0 ∷ (map (_*_ (x + y)) zs +p ((xs +p ys) *p (z ∷ zs)))
+    (x +ℤ y) * z +ℤ +0 ∷ (map (_*_ (x +ℤ y)) zs +p ((xs *p (z ∷ zs)) +p (ys *p (z ∷ zs))))
+  ≡⟨ cong ( (x +ℤ y) * z +ℤ +0 ∷_) (cong (map (_*_ (x +ℤ y)) zs +p_) (*p-+p-distrib-r xs ys (z ∷ zs))) ⟩
+     (x +ℤ y) * z +ℤ +0 ∷ (map (_*_ (x +ℤ y)) zs +p ((xs +p ys) *p (z ∷ zs)))
    ∎
+
+*p-map-proof : ∀ (x : ℤ) (xs ys : List ℤ)
+  → 1 ≤ length ys
+  → (x ∷ xs) *p ys ≡ (map (x *_) ys +p (+0 ∷ (xs *p ys)))
+*p-map-proof x [] ys z<ys  =  
+  begin
+    [ x ] *p ys
+  ≡⟨ cong ([ x ] *p_) (sym (addZeroes 1 ys z<ys)) ⟩
+    ([ x ] *p ([ +0 ] +p ys))
+  ≡⟨ sym (*p-+p-distrib-l [ x ] [ +0 ] ys) ⟩
+    ([ x ] *p [ +0 ]) +p ([ x ] *p ys)
+  ≡⟨⟩
+    (((x * +0 +ℤ +0) ∷ [] ) +p ([ x ] *p ys)) 
+  ≡⟨ cong (_+p ([ x ] *p ys)) (cong (_∷ []) (+-identityʳℤ (x * +0))) ⟩
+    ([ x * +0 ] +p ([ x ] *p ys))
+  ≡⟨ cong (_+p ([ x ] *p ys)) (cong (_∷ []) (*-zeroʳℤ x)) ⟩
+    ([ +0 ] +p ([ x ] *p ys))
+  ≡⟨ +p-comm [ +0 ] ([ x ] *p ys) ⟩
+    ([ x ] *p ys) +p [ +0 ]
+  ≡⟨ cong (_+p [ +0 ]) (*p-map-left-single x ys) ⟩
+    map (_*_ x) ys +p [ +0 ]
+   ∎
+*p-map-proof x  (z ∷ zs) [ y ]  z<ys = refl   
+*p-map-proof x  (z ∷ zs) (y ∷ ys)  z<ys = refl
+
 
 -- properties of new *p
 
@@ -470,15 +493,15 @@ map-shiftRight-zero (y ∷ ys) =
 *p-dist-+p-l xs ys [] rewrite *p-identity-r xs | +pRightEmpty ys | +pRightEmpty (xs p' ys) = refl   
 *p-dist-+p-l (x ∷ xs) (y ∷ ys) (z ∷ zs) = 
   begin
-    x * y + x * z ∷ (((map (_*_ x) ys +p map (_*_ y) xs) +p (+0 ∷ (xs p' ys))) +p ((map (_*_ x) zs +p map (_*_ z) xs) +p (+0 ∷ (xs p' zs))))
-  ≡⟨ cong₂ (_∷_) (sym (*-distribˡ-+ x y z)) (+p-assoc-two (map (_*_ x) ys +p map (_*_ y) xs) (+0 ∷ (xs p' ys)) (map (_*_ x) zs +p map (_*_ z) xs) (+0 ∷ (xs p' zs))) ⟩
-    x * (y + z) ∷ (((map (_*_ x) ys +p map (_*_ y) xs) +p  (map (_*_ x) zs +p map (_*_ z) xs)) +p (+0 ∷ ((xs p' ys) +p (xs p' zs))))
-  ≡⟨ cong (x * (y + z) ∷_) (cong (_+p (+0 ∷ ((xs p' ys) +p (xs p' zs)))) (+p-assoc-two (map (_*_ x) ys) (map (_*_ y) xs) (map (_*_ x) zs) (map (_*_ z) xs))) ⟩
-    x * (y + z) ∷  (((map (_*_ x) ys +p map (_*_ x) zs) +p (map (_*_ y) xs +p map (_*_ z) xs)) +p (+0 ∷ ((xs p' ys) +p (xs p' zs))))
-  ≡⟨ cong (x * (y + z) ∷_) (cong (_+p (+0 ∷ ((xs p' ys) +p (xs p' zs)))) (cong₂ (_+p_) (map-+p-distrib x ys zs) (map-+p-dist-two y z xs))) ⟩  
-    x * (y + z) ∷ ((map (_*_ x) (ys +p zs) +p map (_*_ (y + z)) xs) +p (+0 ∷ ((xs p' ys) +p (xs p' zs))))
-  ≡⟨ cong (x * (y + z) ∷_) (cong ((map (_*_ x) (ys +p zs) +p map (_*_ (y + z)) xs) +p_) (cong (+0 ∷_ ) (*p-dist-+p-l xs ys zs))) ⟩
-     x * (y + z) ∷ ((map (_*_ x) (ys +p zs) +p map (_*_ (y + z)) xs) +p (+0 ∷ (xs p' (ys +p zs))))
+    x * y +ℤ x * z ∷ (((map (_*_ x) ys +p map (_*_ y) xs) +p (+0 ∷ (xs p' ys))) +p ((map (_*_ x) zs +p map (_*_ z) xs) +p (+0 ∷ (xs p' zs))))
+  ≡⟨ cong₂ (_∷_) (sym (*-distribˡ-+ℤ x y z)) (+p-assoc-two (map (_*_ x) ys +p map (_*_ y) xs) (+0 ∷ (xs p' ys)) (map (_*_ x) zs +p map (_*_ z) xs) (+0 ∷ (xs p' zs))) ⟩
+    x * (y +ℤ z) ∷ (((map (_*_ x) ys +p map (_*_ y) xs) +p  (map (_*_ x) zs +p map (_*_ z) xs)) +p (+0 ∷ ((xs p' ys) +p (xs p' zs))))
+  ≡⟨ cong (x * (y +ℤ z) ∷_) (cong (_+p (+0 ∷ ((xs p' ys) +p (xs p' zs)))) (+p-assoc-two (map (_*_ x) ys) (map (_*_ y) xs) (map (_*_ x) zs) (map (_*_ z) xs))) ⟩
+    x * (y +ℤ z) ∷  (((map (_*_ x) ys +p map (_*_ x) zs) +p (map (_*_ y) xs +p map (_*_ z) xs)) +p (+0 ∷ ((xs p' ys) +p (xs p' zs))))
+  ≡⟨ cong (x * (y +ℤ z) ∷_) (cong (_+p (+0 ∷ ((xs p' ys) +p (xs p' zs)))) (cong₂ (_+p_) (map-+p-distrib x ys zs) (map-+p-dist-two y z xs))) ⟩  
+    x * (y +ℤ z) ∷ ((map (_*_ x) (ys +p zs) +p map (_*_ (y +ℤ z)) xs) +p (+0 ∷ ((xs p' ys) +p (xs p' zs))))
+  ≡⟨ cong (x * (y +ℤ z) ∷_) (cong ((map (_*_ x) (ys +p zs) +p map (_*_ (y +ℤ z)) xs) +p_) (cong (+0 ∷_ ) (*p-dist-+p-l xs ys zs))) ⟩
+     x * (y +ℤ z) ∷ ((map (_*_ x) (ys +p zs) +p map (_*_ (y +ℤ z)) xs) +p (+0 ∷ (xs p' (ys +p zs))))
   ∎
 
 *p-dist-+p-r : ∀ (xs ys zs : List ℤ)
@@ -490,13 +513,13 @@ map-shiftRight-zero (y ∷ ys) =
 
 
 --properties of length
-
+{-
 lengthseven : ∀ (xs ys : List ℤ)
   → length (xs +p ys) ≡ length xs ⊔ length ys
 lengthseven [] ys rewrite +pLeftEmpty ys = refl
-lengthseven xs [] rewrite +pRightEmpty xs | Data.Nat.Properties.⊔-identityʳ (length xs) = refl  
+lengthseven xs [] = {!!} -- rewrite   --+pRightEmpty xs | +-identityʳ (length xs) = {!!} --refl  
 lengthseven (x ∷ xs) (y ∷ ys) rewrite lengthseven xs ys = refl  
-
+-}
 
 length-map : ∀ (x : ℤ) (xs : List ℤ)
   → length xs ≡ length (map (x *_) xs)
@@ -505,12 +528,12 @@ length-map x (y ∷ ys) rewrite length-map x ys = refl
 
 
 lengthfive : ∀ (y : ℤ) (ys : List ℤ)
-  → length ys <ℕ length (y ∷ ys)
-lengthfive y [] = Data.Nat.z<s
-lengthfive y1 (y2 ∷ ys) =  Data.Nat.s<s Data.Nat.Properties.≤-refl
+  → length ys < length (y ∷ ys)
+lengthfive y [] = z<s
+lengthfive y1 (y2 ∷ ys) =  s<s ≤-refl
 
 lengthnine : ∀ (y : ℤ)  
-  → zero <ℕ length ([ y ]) 
+  → zero < length ([ y ]) 
 lengthnine y =  Data.Nat.z<s
 
 
@@ -518,6 +541,17 @@ length-single : ∀ (x : ℤ) (ys : List ℤ)
   → length ([ x ] *p ys) ≡ length ys 
 length-single x [] = refl
 length-single x (y ∷ ys) rewrite length-map x ys | +pRightEmpty (map (x *_) ys) = refl  
+
+length-take : ∀ n (xs : List ℤ) → length (take n xs) ≡ n ⊓ (length xs)
+length-take zero  xs  rewrite  takeZero xs = refl 
+length-take (suc n) []       = refl
+length-take (suc n) (x ∷ xs) = cong ℕ.suc (length-take n xs)
+
+length-drop : ∀ n (xs : List ℤ) → length (drop n xs) ≡ length xs Data.Nat.∸ n
+length-drop zero    xs  rewrite dropZero xs = refl  
+length-drop (suc n) []       = refl
+length-drop (suc n) (x ∷ xs) = length-drop n xs
+
 
 
 
@@ -539,9 +573,9 @@ shiftRight-zero-*p (x ∷ xs) =
 
 
 shiftRight-shiftRight : ∀ (m n : ℕ) (xs  : List ℤ)
-  → shiftRight m (shiftRight n xs) ≡ shiftRight (m +ℕ n) xs
+  → shiftRight m (shiftRight n xs) ≡ shiftRight (m + n) xs
 shiftRight-shiftRight zero n xs = refl
-shiftRight-shiftRight (ℕ.suc m) n xs rewrite shiftRight-shiftRight m n xs = refl 
+shiftRight-shiftRight (suc m) n xs rewrite shiftRight-shiftRight m n xs = refl 
 
 
 shiftRight-+p : ∀ (m : ℕ) (xs ys : List ℤ)
@@ -556,17 +590,26 @@ shiftRight-len zero = refl
 shiftRight-len (ℕ.suc m) rewrite shiftRight-len m = refl 
   
 shiftRight-list-len : ∀ (m : ℕ) (xs : List ℤ)
-  → length (shiftRight m xs) ≡ length xs +ℕ m 
-shiftRight-list-len zero xs  rewrite Data.Nat.Properties.+-identityʳ (length xs) = refl   
+  → length (shiftRight m xs) ≡ length xs + m 
+shiftRight-list-len zero xs  rewrite +-identityʳ (length xs) = refl   
 shiftRight-list-len (ℕ.suc m) xs =  
   begin
-    ℕ.suc (length (shiftRight m xs)) --length (shiftRight m xs)
+    suc (length (shiftRight m xs)) --length (shiftRight m xs)
   ≡⟨ cong ℕ.suc (shiftRight-list-len m xs) ⟩
-    ℕ.suc (length xs +ℕ m)
-  ≡⟨ cong ℕ.suc (Data.Nat.Properties.+-comm (length xs) m) ⟩
-    ℕ.suc (m +ℕ length xs)
+    suc (length xs + m)
+  ≡⟨ cong ℕ.suc (+-comm (length xs) m) ⟩
+    suc (m + length xs)
   ≡⟨⟩
-    ℕ.suc m +ℕ length xs
-  ≡⟨ Data.Nat.Properties.+-comm (ℕ.suc m) (length xs) ⟩
-    length xs +ℕ ℕ.suc m
+    suc m + length xs
+  ≡⟨ +-comm (suc m) (length xs) ⟩
+    length xs + suc m
   ∎
+
+{- 
+*p≡p' : ∀ (xs ys : List ℤ)
+  → xs *p ys ≡ xs p' ys
+*p≡p' [] ys = refl
+*p≡p' xs [] rewrite *pRightEmpty xs | *p-identity-r xs = refl      
+*p≡p' (x ∷ xs) (y ∷ ys) = {!!}
+
+-}
