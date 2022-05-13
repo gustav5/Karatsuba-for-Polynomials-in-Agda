@@ -20,37 +20,25 @@ open import libExjobb
 
 karatsuba' : ℕ → List ℤ → List ℤ → List ℤ
 karatsuba' zero xs ys = xs *p ys
-karatsuba' (suc n) xs ys = if ((((length xs) / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
-                           then (xs *p ys)
-                           else
-                           let m = ((length xs / 2) ⊓ (length ys / 2)) in
-                           let (b , a) = splitAt m xs in
-                           let (d , c) = splitAt m ys in
-                           let ac = karatsuba' n a c in 
-                           let bd = karatsuba' n b d in
-                           let ad_plus_bc = ((karatsuba' n (a +p b) (c +p d) -p ac) -p bd) in
-                           ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd
-
-karatsuba'' : ℕ → List ℤ → List ℤ → List ℤ
-karatsuba'' zero xs ys = xs *p ys
-karatsuba'' (suc n) xs ys with ((((length xs) / 2) ⊓ (length ys / 2)) ≤? 2)
+karatsuba' (suc n) xs ys with ((((length xs) / 2) ⊓ (length ys / 2)) ≤? 2)
 ...   | (yes _) = (xs *p ys)
-...   | (no _) =
-                           let m = ((length xs / 2) ⊓ (length ys / 2)) in
-                           let b = take m xs in
-                           let a = drop m xs in
-                           let d  = take m ys in
-                           let c = drop m ys in
-                           let ac = karatsuba'' n a c in 
-                           let bd = karatsuba'' n b d in
-                           let ad_plus_bc = ((karatsuba'' n (a +p b) (c +p d) -p ac) -p bd) in
-                           ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd
+...   | (no _) = ((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd
+                       where
+                       m = ((length xs / 2) ⊓ (length ys / 2)) 
+                       b = take m xs
+                       a = drop m xs
+                       d  = take m ys
+                       c = drop m ys 
+                       ac = karatsuba' n a c  
+                       bd = karatsuba' n b d 
+                       ad_plus_bc = ((karatsuba' n (a +p b) (c +p d) -p ac) -p bd) 
+                           
 
 
 karatsuba : List ℤ → List ℤ → List ℤ
 karatsuba [] ys = []
 karatsuba xs [] = []
-karatsuba xs ys = karatsuba'' ((length xs) ⊔ (length ys)) xs ys
+karatsuba xs ys = karatsuba' ((length xs) ⊔ (length ys)) xs ys
 
 
 
@@ -238,7 +226,7 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
 -}
 module _ (*p-comm : (xs ys : List ℤ) → xs *p ys ≡ ys *p xs )  where   --- assuming commutativity for *p
   ismul'' : ∀ (n : ℕ) (xs ys : List ℤ)
-    → xs *p ys ≡ karatsuba'' n xs ys
+    → xs *p ys ≡ karatsuba' n xs ys
   ismul'' zero xs ys = refl
   ismul'' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤? 2)
   ...                   | (yes _) = refl
@@ -308,7 +296,7 @@ module _ (*p-comm : (xs ys : List ℤ) → xs *p ys ≡ ys *p xs )  where   --- 
                            
                         ≡⟨ cong (λ x → ((bd) +p (shiftRight m (((x) -p (ac)) -p (bd))))  +p (shiftRight (2 *ℕ m) (ac))) (ismul'' n (a +p b) (c +p d)) ⟩
                         
-                           ((bd) +p (shiftRight m ((((karatsuba'' n (a +p b) (c +p d)) -p ac) -p bd)))) +p (shiftRight (2 *ℕ m) (ac))
+                           ((bd) +p (shiftRight m ((((karatsuba' n (a +p b) (c +p d)) -p ac) -p bd)))) +p (shiftRight (2 *ℕ m) (ac))
                         ≡⟨⟩
                            ((bd) +p (shiftRight m (ad_plus_bc))) +p (shiftRight (2 *ℕ m) (ac))
                            
@@ -333,9 +321,9 @@ module _ (*p-comm : (xs ys : List ℤ) → xs *p ys ≡ ys *p xs )  where   --- 
     a = drop m xs
     d = take m ys
     c =  drop m ys
-    ac = karatsuba'' n a c 
-    bd = karatsuba'' n b d
-    ad_plus_bc = ((karatsuba'' n (a +p b) (c +p d) -p ac) -p bd)
+    ac = karatsuba' n a c 
+    bd = karatsuba' n b d
+    ad_plus_bc = ((karatsuba' n (a +p b) (c +p d) -p ac) -p bd)
     m>2 : 2 < m
     m>2 = ≰⇒> ¬m≤2 
 
