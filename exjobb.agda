@@ -1,16 +1,14 @@
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans; cong; cong₂; cong-app)
 open Eq.≡-Reasoning
-open import Data.Nat renaming( _*_ to _*ℕ_)   --using (ℕ; zero; suc; _⊓_; _⊔_ ;z≤n; s≤s;z<s;s<s) renaming( _*_ to _*ℕ_ ;_+_ to _+ℕ_;_<?_ to _<?ℕ_; _≤?_ to  _≤?ℕ_; _≤_ to _≤ℕ_; _<_ to _<ℕ_;_≥_ to  _≥ℕ_ ) hiding (-)
+open import Data.Nat renaming( _*_ to _*ℕ_) 
 open import Data.Nat.Properties renaming(*-comm to *-commℕ)
 open import Data.Bool using (Bool; true; false; T; _∧_; _∨_; not)
 open import Data.Integer  using (ℤ;+0;_*_) renaming (_+_ to _+ℤ_; -_ to -i_) 
-open import Data.Integer.Properties hiding(_≤?_;≰⇒>;_<?_;m≤n⇒m⊔n≡n;≤-reflexive;<⇒≤;m≤n⇒m⊓n≡m) renaming (*-zeroʳ to *-zeroʳℤ;*-zeroˡ to *-zeroˡℤ;+-inverseʳ to +-inverseʳℤ; +-identityʳ to +-identityʳℤ;+-identityˡ to +-identityˡℤ;+-comm to +-commℤ;*-distribʳ-+ to *-distribʳ-+ℤ;*-distribˡ-+ to *-distribˡ-+ℤ;≤-refl to ≤-reflℤ;+-assoc to +-assocℤ)
+open import Data.Integer.Properties hiding(_≤?_;≰⇒>;_<?_;m≤n⇒m⊔n≡n;≤-reflexive;<⇒≤;m≤n⇒m⊓n≡m;≤-trans;m≥n⇒m⊓n≡n;m⊓n≤m;m≤m⊔n) renaming (*-zeroʳ to *-zeroʳℤ;*-zeroˡ to *-zeroˡℤ;+-inverseʳ to +-inverseʳℤ; +-identityʳ to +-identityʳℤ;+-identityˡ to +-identityˡℤ;+-comm to +-commℤ;*-distribʳ-+ to *-distribʳ-+ℤ;*-distribˡ-+ to *-distribˡ-+ℤ;≤-refl to ≤-reflℤ;+-assoc to +-assocℤ)
 open import Relation.Nullary using (¬_; Dec; yes; no)
-open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Level using (Level)
-open import Data.Nat.DivMod
---open import Data.Integer.Base hiding (_⊓_;_/_;_⊔_) 
+open import Data.Nat.DivMod 
 open import Data.Empty using (⊥; ⊥-elim)
 open import libExjobb 
 
@@ -52,7 +50,7 @@ karatsuba'' (suc n) xs ys with ((((length xs) / 2) ⊓ (length ys / 2)) ≤? 2)
 karatsuba : List ℤ → List ℤ → List ℤ
 karatsuba [] ys = []
 karatsuba xs [] = []
-karatsuba xs ys = karatsuba' ((length xs) Data.Nat.⊔ (length ys)) xs ys
+karatsuba xs ys = karatsuba'' ((length xs) ⊔ (length ys)) xs ys
 
 
 
@@ -133,19 +131,39 @@ returnmin-left : ∀ (m n : ℕ)
   → m < n
   → m ⊓ n ≡ m
 returnmin-left zero n m<n = refl
-returnmin-left (ℕ.suc m) (ℕ.suc n) (s<s m<n) rewrite returnmin-left m n m<n = refl
+returnmin-left (suc m) (suc n) (s<s m<n) rewrite returnmin-left m n m<n = refl
 
 returnmin-right : ∀ (m n : ℕ)
   → n < m
   → m ⊓ n ≡ n
 returnmin-right (suc m) zero m<n = refl
-returnmin-right (ℕ.suc m) (ℕ.suc n) (s<s m<n) rewrite returnmin-right m n m<n = refl 
+returnmin-right (suc m) (suc n) (s<s m<n) rewrite returnmin-right m n m<n = refl 
 
 
 a2<n⇒0<n : ∀ (n : ℕ)
   → 2 < n
   → 0 < n
-a2<n⇒0<n  n two<n = Data.Nat.Properties.≤-trans  z<s two<n 
+a2<n⇒0<n  n two<n = ≤-trans  z<s two<n
+
+length-lemma-two : ∀  (y : ℤ) (xs ys : List ℤ)
+  → zero < length xs
+  →   length ys  < length (xs *p (y ∷ ys)) 
+length-lemma-two  y xs ys z<xs  =  length-*p (xs) (y ∷ ys) z<xs  z<s
+
+suc-lemma : ∀ (n : ℕ)
+  → 0 < n
+  → suc (n  ∸ 1 ) ≡ n 
+suc-lemma (suc n) 0<n = refl 
+
+*-comm' : ∀ (xs ys : List ℤ)
+  → xs *p ys ≡ ys *p xs
+*-comm' xs ys = {!!} 
+{-
+length*p : ∀ (x : ℤ) (xs ys : List ℤ)
+  → 0 < length xs
+  → length ((x ∷ xs) *p (y ∷ ys)) ≡ (length (x ∷ xs)) + (length (y ∷ ys)) ∸ 1
+length*p x xs ys  rewrite x+y≡x⊔y (map (x *_) ys) (xs *p (y ∷ ys)) | sym (length-map x ys) |  (m≤n⇒m⊔n≡n (<⇒≤ (length-lemma-two y xs ys {!!}))) = {!!} -- | *-comm' xs (y ∷ ys) = {!!} -- | length*p  y  ys xs  {!!} {!!}  = {!!}  --| suc-lemma (length xs + suc (length ys)) {!!} = refl   -- {!!}  --rewrite length*p xs ys {!!} z<ys = {!!}  
+-}
 {-
 ismul' : ∀ (n : ℕ) (xs ys : List ℤ)
   → xs *p ys ≡ karatsuba' n xs ys  
@@ -175,23 +193,23 @@ ismul' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤ᵇ' 2)
                            ((b *p d) +p ((shiftRight m (b *p c)) +p (shiftRight m (a *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))
                         ≡⟨ cong (λ x → ((b *p d) +p (x)) +p (shiftRight (2 *ℕ m) (a *p c))) (+p-comm (shiftRight m (b *p c)) (shiftRight m (a *p d))) ⟩
                            ((b *p d) +p ((shiftRight m (a *p d)) +p (shiftRight m (b *p c)))) +p (shiftRight (2 *ℕ m) (a *p c))
-                           
+
                         ≡⟨ cong (λ x → ((b *p d) +p  x)  +p (shiftRight (2 *ℕ m) (a *p c)))  (sym (shiftRight-+p  m _ _))  ⟩ -- 6
-                         
+
                             ((b *p d) +p (shiftRight m ((a *p d) +p (b *p c)) )) +p (shiftRight (2 *ℕ m) (a *p c))
-                            
+
                         ≡⟨ cong (_+p (shiftRight (2 *ℕ m) (a *p c)))  ( cong (_+p (shiftRight m ((a *p d) +p (b *p c)) )) (ismul' n b d)) ⟩
-                        
+
                             ((bd) +p (shiftRight m ((a *p d) +p (b *p c)))) +p (shiftRight (2 *ℕ m) (a *p c))
-                            
+
                         ≡⟨ cong (λ x →  ((bd) +p (shiftRight m x)) +p (shiftRight (2 *ℕ m) (a *p c))) helperEq ⟩ --5,6     ad+bc-two a d b c
-                        
+
                             ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))
-                            
+
                         ≡⟨ cong (( bd +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))))  +p_)  (cong₂ shiftRight refl (ismul' n a  c) )  ⟩ --recursive call
-                        
+
                            ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))))  +p (shiftRight (2 *ℕ m) (ac))
-                           
+
                         ≡⟨ cong (_+p  (shiftRight ( 2 *ℕ m) (ac))) (cong (bd +p_) (cong₂ (_-p_) (cong₂ shiftRight refl (ismul' n (a +p b) (c +p d))) (ismul' n b d))) ⟩
                            ((bd) +p (shiftRight m ((((karatsuba' n (a +p b) (c +p d)) -p ac) -p bd)))) +p (shiftRight (2 *ℕ m) (ac))
                         ≡⟨⟩
@@ -222,7 +240,7 @@ module _ (*p-comm : (xs ys : List ℤ) → xs *p ys ≡ ys *p xs )  where   --- 
   ismul'' : ∀ (n : ℕ) (xs ys : List ℤ)
     → xs *p ys ≡ karatsuba'' n xs ys
   ismul'' zero xs ys = refl
-  ismul'' (ℕ.suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤? 2)
+  ismul'' (suc n) xs ys with (((length xs / 2) ⊓ (length ys / 2)) ≤? 2)
   ...                   | (yes _) = refl
   ...                   | (no ¬m≤2) = --{!m>2!}
     begin
@@ -326,55 +344,67 @@ module _ (*p-comm : (xs ys : List ℤ) → xs *p ys ≡ ys *p xs )  where   --- 
     shiftRight-two-m : ∀ (m : ℕ) (xs ys : List ℤ)      ---------- needs *p-comm, so this function is here and not in the library
       → zero < length xs
       → zero < length ys
-      → shiftRight m xs *p shiftRight m ys ≡ shiftRight (2 Data.Nat.* m) (xs *p ys)
+      → shiftRight m xs *p shiftRight m ys ≡ shiftRight (2 *ℕ m) (xs *p ys)
     shiftRight-two-m zero xs ys z<xs z<ys = refl
-    shiftRight-two-m (ℕ.suc m) xs ys z<xs z<ys =
+    shiftRight-two-m (suc m) xs ys z<xs z<ys =
       begin
-      (shiftRight (ℕ.suc m) xs) *p (shiftRight (ℕ.suc m) ys)
-      ≡⟨ sym (shiftRight-*p (ℕ.suc m) xs (shiftRight (ℕ.suc m) ys) z<xs Data.Nat.z<s) ⟩
-        shiftRight (ℕ.suc m) (xs *p shiftRight (ℕ.suc m) ys)
-      ≡⟨ cong₂ shiftRight (refl) (*p-comm xs (shiftRight (ℕ.suc m) ys)) ⟩
-        shiftRight (ℕ.suc m) ((shiftRight (ℕ.suc m) ys) *p xs)
-      ≡⟨ cong₂ shiftRight (refl)(sym (shiftRight-*p (ℕ.suc m) ys xs z<ys z<xs)) ⟩ 
-        shiftRight (ℕ.suc m) ((shiftRight (ℕ.suc m) (ys *p xs)))
-      ≡⟨ shiftRight-shiftRight (ℕ.suc m) (ℕ.suc m) (ys *p xs) ⟩
-        +0 ∷ shiftRight (m + ℕ.suc m) (ys *p xs) 
-      ≡⟨ cong (+0 ∷_) (cong₂ shiftRight (cong (m +_) (cong ℕ.suc (sym (Data.Nat.Properties.+-identityʳ m)))) (*p-comm ys xs)) ⟩
+      (shiftRight (suc m) xs) *p (shiftRight (suc m) ys)
+      ≡⟨ sym (shiftRight-*p (suc m) xs (shiftRight (suc m) ys) z<xs z<s) ⟩
+        shiftRight (suc m) (xs *p shiftRight (suc m) ys)
+      ≡⟨ cong₂ shiftRight (refl) (*p-comm xs (shiftRight (suc m) ys)) ⟩
+        shiftRight (suc m) ((shiftRight (suc m) ys) *p xs)
+      ≡⟨ cong₂ shiftRight (refl)(sym (shiftRight-*p (suc m) ys xs z<ys z<xs)) ⟩ 
+        shiftRight (suc m) ((shiftRight (suc m) (ys *p xs)))
+      ≡⟨ shiftRight-shiftRight (suc m) (suc m) (ys *p xs) ⟩
+        +0 ∷ shiftRight (m + suc m) (ys *p xs) 
+      ≡⟨ cong (+0 ∷_) (cong₂ shiftRight (cong (m +_) (cong suc (sym (+-identityʳ m)))) (*p-comm ys xs)) ⟩
         +0 ∷ shiftRight (m + suc (m + zero )) (xs *p ys)
       ∎
 
 
     m≤xs : m ≤ length xs
     m≤xs  with length xs / 2 ≤? length ys / 2
-    ...                                       | (yes m≤n) rewrite Data.Nat.Properties.m≤n⇒m⊓n≡m m≤n = m/n≤m (length xs) 2   
-    ...                                       | (no n<m) = (Data.Nat.Properties.m≤n⇒m⊓o≤n ((length ys) / 2) (m/n≤m (length xs) 2))
+    ...                                       | (yes m≤n) rewrite m≤n⇒m⊓n≡m m≤n = m/n≤m (length xs) 2   
+    ...                                       | (no n<m) = (m≤n⇒m⊓o≤n ((length ys) / 2) (m/n≤m (length xs) 2))
   
     m≤ys : m ≤ length ys
     m≤ys  with length ys / 2 ≤? length xs / 2
-    ...                                       | (yes m≤n)   rewrite Data.Nat.Properties.m≥n⇒m⊓n≡n m≤n = m/n≤m (length ys) 2   
-    ...                                       | (no n<m) = (Data.Nat.Properties.m≤n⇒o⊓m≤n ((length xs) / 2) (m/n≤m (length ys) 2))
+    ...                                       | (yes m≤n)   rewrite m≥n⇒m⊓n≡n m≤n = m/n≤m (length ys) 2   
+    ...                                       | (no n<m) = (m≤n⇒o⊓m≤n ((length xs) / 2) (m/n≤m (length ys) 2))
   
 
     test : ∀ {m n o : ℕ} → m ≤ o → n ≤ o → (m ⊓ n) ⊓  o ≡ m ⊓ n 
-    test  {zero} _ _    =  refl --Data.Nat.Properties.m≤n⇒m⊔n≡n n≤o 
-    test {suc m} {zero} _ z≤o = refl  --cong suc (m≤n⇒m⊔n≡n m≤n)
-    test  {suc m} {suc n} {suc o} (s≤s m≤o) (s≤s n≤o) = cong ℕ.suc (test  m≤o n≤o)
+    test  {zero} _ _    =  refl 
+    test {suc m} {zero} _ z≤o = refl  
+    test  {suc m} {suc n} {suc o} (s≤s m≤o) (s≤s n≤o) = cong suc (test  m≤o n≤o)
 
 
     lengthTakeMin : ∀ (m n : ℕ) (xs : List ℤ)
       → m ⊓ n ≤ length xs
       → length (take (m ⊓ n) xs) ≡ m ⊓ n 
-    lengthTakeMin m n xs  m⊓n≤xs  rewrite length-take (m ⊓ n) xs | Data.Nat.Properties.m≤n⇒m⊓n≡m m⊓n≤xs = refl 
+    lengthTakeMin m n xs  m⊓n≤xs  rewrite length-take (m ⊓ n) xs | m≤n⇒m⊓n≡m m⊓n≤xs = refl 
 
     lengthDropMin : ∀ (m n : ℕ) (xs : List ℤ)
       → m ⊓ n ≤ length xs
-      → length (drop (m ⊓ n) xs) ≡ (length xs) Data.Nat.∸ m ⊓ n 
-    lengthDropMin m n xs  m⊓n≤xs rewrite length-drop (m ⊓ n) xs = refl    --rewrite length-take (m ⊓ n) xs | Data.Nat.Properties.m≤n⇒m⊓n≡m m⊓n≤xs = refl 
+      → length (drop (m ⊓ n) xs) ≡ (length xs) ∸ m ⊓ n 
+    lengthDropMin m n xs  m⊓n≤xs rewrite length-drop (m ⊓ n) xs = refl    
 
+    
+    testfour : ∀ (m : ℕ)
+      → 2 < m / 2
+      → 5 < m
+    testfour m m>5 =  {!!} 
+    
     testfive : ∀ (m n : ℕ)
       → 2 < ((m / 2) ⊓ (n / 2) )
       → 5 < m
-    testfive m n m/2⊓n/2>2 = {!!} 
+    testfive m n m/2⊓n/2>2 = testfour m (m≤n⊓o⇒m≤n (m / 2) (n / 2) m/2⊓n/2>2)
+
+    helperone : ∀ (m  n : ℕ)
+      → m ≤ n
+      → 0 ≤ n ∸ m
+    helperone m zero m≤n = {!!}
+    helperone m (suc n) m≤n = {!!} 
 
     testsix : ∀ (m n : ℕ)
       → 5 < m
@@ -384,18 +414,18 @@ module _ (*p-comm : (xs ys : List ℤ) → xs *p ys ≡ ys *p xs )  where   --- 
 
   
     xs>5 : 5 < length xs
-    xs>5  = testfive (length xs) (length ys) (≰⇒> ¬m≤2) -- rewrite m≤n⇒m⊓n≡m m≤n   = {!!} -- = {!!} --rewrite  Data.Nat.Properties.m≤n⇒m⊓n≡m  xs<ys = {!!} 
+    xs>5  = testfive (length xs) (length ys) (≰⇒> ¬m≤2) -- rewrite m≤n⇒m⊓n≡m m≤n   = {!!} -- = {!!} --rewrite  m≤n⇒m⊓n≡m  xs<ys = {!!} 
 
   
     lb>2 : 2 < length b
-    lb>2  rewrite length-take m b | lengthTakeMin (length xs / 2) (length ys / 2) xs  (Data.Nat.Properties.m≤n⇒m⊓o≤n ((length ys) / 2) (m/n≤m (length xs) 2)) =  ≰⇒> ¬m≤2
+    lb>2  rewrite length-take m b | lengthTakeMin (length xs / 2) (length ys / 2) xs  (m≤n⇒m⊓o≤n ((length ys) / 2) (m/n≤m (length xs) 2)) =  ≰⇒> ¬m≤2
   
     ld>2 : 2 < length d
-    ld>2 rewrite length-take m d  | lengthTakeMin (length xs / 2) (length ys / 2) ys  (Data.Nat.Properties.m≤n⇒o⊓m≤n ((length xs) / 2) (m/n≤m (length ys) 2)) = ≰⇒> ¬m≤2 
+    ld>2 rewrite length-take m d  | lengthTakeMin (length xs / 2) (length ys / 2) ys  (m≤n⇒o⊓m≤n ((length xs) / 2) (m/n≤m (length ys) 2)) = ≰⇒> ¬m≤2 
 
     la>2 : length a > 2
-    la>2 rewrite length-drop m a |  lengthDropMin (length xs / 2) (length ys / 2) xs ((Data.Nat.Properties.m≤n⇒m⊓o≤n ((length ys) / 2) (m/n≤m (length xs) 2))) = testsix (length xs) (length ys) (xs>5) ((≰⇒> ¬m≤2)) --| ∸-distribˡ-⊓-⊔ (length xs) (length xs / 2) (length ys / 2) = {!!} --= {!!} --divmod
+    la>2 rewrite length-drop m a |  lengthDropMin (length xs / 2) (length ys / 2) xs ((m≤n⇒m⊓o≤n ((length ys) / 2) (m/n≤m (length xs) 2))) | ∸-distribˡ-⊓-⊔ (length xs) (length xs / 2) (length ys / 2) = {!!} --= {!!} ( m≤m⊔n (length xs ∸ ((length xs) / 2)) (length xs ∸ ((length ys) / 2)) )  -- {!!} --|  m≤m⊔n (length xs ∸ ((length xs) / 2)) (length xs ∸ ((length ys) / 2)) = ?  --= testsix (length xs) (length ys) (xs>5) ((≰⇒> ¬m≤2)) -= {!!} --= {!!} --divmod 
 
     lc>2 : 2 < length c
-    lc>2 = {!!}
+    lc>2  rewrite length-drop m c = {!!}  
   
