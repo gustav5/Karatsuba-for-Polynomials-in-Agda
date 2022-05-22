@@ -40,7 +40,10 @@ karatsuba xs ys = karatsuba' ((length xs) ⊔ (length ys)) xs ys
 
 
 -- Proof 
-module _ (assum : (m : ℕ)(a b c d : List ℤ) → ((shiftRight m ((a *p d) +p (b *p c)))+p (shiftRight (2 *ℕ m) (a *p c))) ≡  ((shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))) +p (shiftRight (2 *ℕ m) (a *p c)))) ( m/2>2⇒5<m : ∀ (m : ℕ) → 2 < m / 2 → 5 < m) (drop-lemma :  (xs ys : List ℤ) → 5 < (length xs) → 5 < (length ys) → 3 ≤ length (drop ((length xs / 2) ⊓  (length ys / 2)) xs))  (drop-lemma-two :  (xs ys : List ℤ) → 5 < (length xs) → 5 < (length ys) → 3 ≤ length (drop ((length xs / 2) ⊓  (length ys / 2)) ys)) where   
+module _ (assum : (m : ℕ)(a b c d : List ℤ) → ((shiftRight m ((a *p d) +p (b *p c)))+p (shiftRight (2 *ℕ m) (a *p c))) ≡  ((shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))) +p (shiftRight (2 *ℕ m) (a *p c))))
+                    ( m/2>2⇒5<m : ∀ (m : ℕ) → 2 < m / 2 → 5 < m)
+                    (drop-lemma :  (xs ys : List ℤ) → 5 < (length xs) → 5 < (length ys) → 3 ≤ length (drop ((length xs / 2) ⊓  (length ys / 2)) xs))
+                    (drop-lemma-two :  (xs ys : List ℤ) → 5 < (length xs) → 5 < (length ys) → 3 ≤ length (drop ((length xs / 2) ⊓  (length ys / 2)) ys)) where   
   ismul'' : ∀ (n : ℕ) (xs ys : List ℤ)
     → xs *p ys ≡ karatsuba' n xs ys
   ismul'' zero xs ys = refl
@@ -48,95 +51,96 @@ module _ (assum : (m : ℕ)(a b c d : List ℤ) → ((shiftRight m ((a *p d) +p 
   ...                   | (yes _) = refl
   ...                   | (no ¬m≤2) = 
     begin
-      xs *p ys
-                         ≡⟨ cong₂ (_*p_) (split-p  m xs m≤xs) (split-p  m ys m≤ys) ⟩
-                         
-                           (b +p shiftRight m a) *p (d +p shiftRight m c)
-                           
-                         ≡⟨ sym (*p-+p-distrib-r b (shiftRight m a) (d +p shiftRight m c)) ⟩
-                         
-                           (b *p (d +p shiftRight m c)) +p ((shiftRight m a) *p (d +p shiftRight m c))
-                           
-                         ≡⟨ cong₂ (_+p_) (sym (*p-+p-distrib-l b d (shiftRight m c))) (sym (*p-+p-distrib-l (shiftRight m a) d (shiftRight m c))) ⟩
-                         
-                            ((b *p d) +p (b *p (shiftRight m c))) +p (((shiftRight m a) *p d) +p (shiftRight m a *p shiftRight m c))
-                            
-                         ≡⟨ +p-rearrange (b *p d) (b *p (shiftRight m c)) ((shiftRight m a) *p d)  (shiftRight m a *p shiftRight m c) ⟩
-                         
-                           ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
-                           
-                         ≡⟨ cong (((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p_) (shiftRight-two-m m a c  (n>2⇒0<n (length a) la>2) (n>2⇒0<n (length c) lc>2)  ) ⟩ -- 3
-                         
-                           ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight (2 *ℕ m) (a *p c))
-                           
-                         ≡⟨ cong (_+p (shiftRight (2 *ℕ m) (a *p c))) (cong ((b *p d) +p_) (cong (_+p ((shiftRight m a) *p d)) (*p-comm b (shiftRight m c)))) ⟩
-                         
-                           ((b *p d) +p (((shiftRight m c) *p b) +p ((shiftRight m a) *p d))) +p (shiftRight (2 *ℕ m) (a *p c))
-                           
-                        ≡⟨ cong (_+p (shiftRight (2 *ℕ m) (a *p c))) (cong ((b *p d) +p_)
-                        (cong₂ (_+p_) (sym (shiftRight-*p m c b ((n>2⇒0<n (length c) lc>2)) (n>2⇒0<n (length b) lb>2))) (sym (shiftRight-*p m a d (n>2⇒0<n (length a) la>2) (n>2⇒0<n (length d) ld>2))))) ⟩
-                        
-                           ((b *p d) +p ((shiftRight m (c *p b)) +p (shiftRight m (a *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))
-                        
-                        ≡⟨ cong (λ x → ((b *p d) +p ((shiftRight m (x)) +p (shiftRight m (a *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))) (*p-comm c b)  ⟩
-                        
-                           ((b *p d) +p ((shiftRight m (b *p c)) +p (shiftRight m (a *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))
-                           
-                        ≡⟨ cong (λ x → ((b *p d) +p (x)) +p (shiftRight (2 *ℕ m) (a *p c))) (+p-comm (shiftRight m (b *p c)) (shiftRight m (a *p d))) ⟩
-                        
-                           ((b *p d) +p ((shiftRight m (a *p d)) +p (shiftRight m (b *p c)))) +p (shiftRight (2 *ℕ m) (a *p c))
-                           
-                        ≡⟨ cong (λ x → ((b *p d) +p  x)  +p (shiftRight (2 *ℕ m) (a *p c)))  (sym (shiftRight-+p  m _ _))  ⟩ 
-                        
-                            ((b *p d) +p (shiftRight m ((a *p d) +p (b *p c)) )) +p (shiftRight (2 *ℕ m) (a *p c))
-                            
-                        ≡⟨ cong (_+p (shiftRight (2 *ℕ m) (a *p c)))  ( cong (_+p (shiftRight m ((a *p d) +p (b *p c)) )) (ismul'' n b d)) ⟩
-                        
-                            ((bd) +p (shiftRight m ((a *p d) +p (b *p c)))) +p (shiftRight (2 *ℕ m) (a *p c))
+         xs *p ys
+        
+      ≡⟨ cong₂ (_*p_) (split-p  m xs m≤xs) (split-p  m ys m≤ys) ⟩
 
-                        ≡⟨ +p-assoc (bd) (shiftRight m ((a *p d) +p (b *p c))) (shiftRight (2 *ℕ m) (a *p c)) ⟩
+        (b +p shiftRight m a) *p (d +p shiftRight m c)
 
-                            (bd) +p ((shiftRight m ((a *p d) +p (b *p c)))+p (shiftRight (2 *ℕ m) (a *p c)))
-                            
-                        ≡⟨ cong (bd +p_) (assum m a b c d) ⟩ 
-                        
-                            ((bd) +p ((shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))) +p (shiftRight (2 *ℕ m) (a *p c))))
+       ≡⟨ sym (*p-+p-distrib-r b (shiftRight m a) (d +p shiftRight m c)) ⟩
 
-                        ≡⟨ sym (+p-assoc (bd) (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))) (shiftRight (2 *ℕ m) (a *p c))) ⟩
+         (b *p (d +p shiftRight m c)) +p ((shiftRight m a) *p (d +p shiftRight m c))
 
-                           ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))
-  
-                        ≡⟨ cong (( bd +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))))  +p_)  (cong₂ shiftRight refl (ismul'' n a  c) )  ⟩ 
-                        
-                           ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))))  +p (shiftRight (2 *ℕ m) (ac))
-                           
-                        ≡⟨ cong (λ x → ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (x))))  +p (shiftRight (2 *ℕ m) (ac))) (ismul'' n b d) ⟩
-                        
-                           ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (bd))))  +p (shiftRight (2 *ℕ m) (ac))
-                           
-                        ≡⟨ cong (λ x → ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (x)) -p (bd))))  +p (shiftRight (2 *ℕ m) (ac))) (ismul'' n a c) ⟩
-                        
-                           ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (ac)) -p (bd))))  +p (shiftRight (2 *ℕ m) (ac))
-                           
-                        ≡⟨ cong (λ x → ((bd) +p (shiftRight m (((x) -p (ac)) -p (bd))))  +p (shiftRight (2 *ℕ m) (ac))) (ismul'' n (a +p b) (c +p d)) ⟩
-                        
-                           ((bd) +p (shiftRight m ((((karatsuba' n (a +p b) (c +p d)) -p ac) -p bd)))) +p (shiftRight (2 *ℕ m) (ac))
-                        ≡⟨⟩
-                           ((bd) +p (shiftRight m (ad_plus_bc))) +p (shiftRight (2 *ℕ m) (ac))
-                           
-                         ≡⟨ +p-assoc (bd) (shiftRight m (ad_plus_bc)) (shiftRight (2 *ℕ m) (ac)) ⟩
-                         
-                           (bd) +p ((shiftRight m (ad_plus_bc)) +p (shiftRight (2 *ℕ m) (ac)))
-                           
-                         ≡⟨ cong (bd +p_) (+p-comm (shiftRight m (ad_plus_bc))  (shiftRight (2 *ℕ m) (ac))) ⟩
-                         
-                            bd +p ((shiftRight (2 *ℕ m) (ac)) +p (shiftRight m (ad_plus_bc)))
-                            
-                         ≡⟨ +p-comm bd  ((shiftRight (2 *ℕ m) (ac)) +p (shiftRight m (ad_plus_bc))) ⟩
-                         
-                           (((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd )
-                         ∎
-                         
+       ≡⟨ cong₂ (_+p_) (sym (*p-+p-distrib-l b d (shiftRight m c))) (sym (*p-+p-distrib-l (shiftRight m a) d (shiftRight m c))) ⟩
+
+          ((b *p d) +p (b *p (shiftRight m c))) +p (((shiftRight m a) *p d) +p (shiftRight m a *p shiftRight m c))
+
+       ≡⟨ +p-rearrange (b *p d) (b *p (shiftRight m c)) ((shiftRight m a) *p d)  (shiftRight m a *p shiftRight m c) ⟩
+
+         ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight m a *p shiftRight m c)
+
+       ≡⟨ cong (((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p_) (shiftRight-two-m m a c  (n>2⇒0<n (length a) la>2) (n>2⇒0<n (length c) lc>2)  ) ⟩ 
+
+         ((b *p d) +p ((b *p (shiftRight m c)) +p ((shiftRight m a) *p d))) +p (shiftRight (2 *ℕ m) (a *p c))
+
+       ≡⟨ cong (_+p (shiftRight (2 *ℕ m) (a *p c))) (cong ((b *p d) +p_) (cong (_+p ((shiftRight m a) *p d)) (*p-comm b (shiftRight m c)))) ⟩
+
+         ((b *p d) +p (((shiftRight m c) *p b) +p ((shiftRight m a) *p d))) +p (shiftRight (2 *ℕ m) (a *p c))
+
+       ≡⟨ cong (_+p (shiftRight (2 *ℕ m) (a *p c))) (cong ((b *p d) +p_)
+       (cong₂ (_+p_) (sym (shiftRight-*p m c b ((n>2⇒0<n (length c) lc>2)) (n>2⇒0<n (length b) lb>2))) (sym (shiftRight-*p m a d (n>2⇒0<n (length a) la>2) (n>2⇒0<n (length d) ld>2))))) ⟩
+
+          ((b *p d) +p ((shiftRight m (c *p b)) +p (shiftRight m (a *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))
+
+       ≡⟨ cong (λ x → ((b *p d) +p ((shiftRight m (x)) +p (shiftRight m (a *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))) (*p-comm c b)  ⟩
+
+          ((b *p d) +p ((shiftRight m (b *p c)) +p (shiftRight m (a *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))
+
+       ≡⟨ cong (λ x → ((b *p d) +p (x)) +p (shiftRight (2 *ℕ m) (a *p c))) (+p-comm (shiftRight m (b *p c)) (shiftRight m (a *p d))) ⟩
+
+          ((b *p d) +p ((shiftRight m (a *p d)) +p (shiftRight m (b *p c)))) +p (shiftRight (2 *ℕ m) (a *p c))
+
+       ≡⟨ cong (λ x → ((b *p d) +p  x)  +p (shiftRight (2 *ℕ m) (a *p c)))  (sym (shiftRight-+p  m _ _))  ⟩ 
+
+           ((b *p d) +p (shiftRight m ((a *p d) +p (b *p c)) )) +p (shiftRight (2 *ℕ m) (a *p c))
+
+       ≡⟨ cong (_+p (shiftRight (2 *ℕ m) (a *p c)))  ( cong (_+p (shiftRight m ((a *p d) +p (b *p c)) )) (ismul'' n b d)) ⟩
+
+           ((bd) +p (shiftRight m ((a *p d) +p (b *p c)))) +p (shiftRight (2 *ℕ m) (a *p c))
+
+       ≡⟨ +p-assoc (bd) (shiftRight m ((a *p d) +p (b *p c))) (shiftRight (2 *ℕ m) (a *p c)) ⟩
+
+           (bd) +p ((shiftRight m ((a *p d) +p (b *p c)))+p (shiftRight (2 *ℕ m) (a *p c)))
+
+       ≡⟨ cong (bd +p_) (assum m a b c d) ⟩ 
+
+           ((bd) +p ((shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))) +p (shiftRight (2 *ℕ m) (a *p c))))
+
+       ≡⟨ sym (+p-assoc (bd) (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))) (shiftRight (2 *ℕ m) (a *p c))) ⟩
+
+          ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d)))) +p (shiftRight (2 *ℕ m) (a *p c))
+
+       ≡⟨ cong (( bd +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))))  +p_)  (cong₂ shiftRight refl (ismul'' n a  c) )  ⟩ 
+
+          ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))))  +p (shiftRight (2 *ℕ m) (ac))
+
+       ≡⟨ cong (λ x → ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (x))))  +p (shiftRight (2 *ℕ m) (ac))) (ismul'' n b d) ⟩
+
+          ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (bd))))  +p (shiftRight (2 *ℕ m) (ac))
+
+       ≡⟨ cong (λ x → ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (x)) -p (bd))))  +p (shiftRight (2 *ℕ m) (ac))) (ismul'' n a c) ⟩
+
+          ((bd) +p (shiftRight m ((((a +p b) *p (c +p d)) -p (ac)) -p (bd))))  +p (shiftRight (2 *ℕ m) (ac))
+
+       ≡⟨ cong (λ x → ((bd) +p (shiftRight m (((x) -p (ac)) -p (bd))))  +p (shiftRight (2 *ℕ m) (ac))) (ismul'' n (a +p b) (c +p d)) ⟩
+
+          ((bd) +p (shiftRight m ((((karatsuba' n (a +p b) (c +p d)) -p ac) -p bd)))) +p (shiftRight (2 *ℕ m) (ac))
+       ≡⟨⟩
+          ((bd) +p (shiftRight m (ad_plus_bc))) +p (shiftRight (2 *ℕ m) (ac))
+
+        ≡⟨ +p-assoc (bd) (shiftRight m (ad_plus_bc)) (shiftRight (2 *ℕ m) (ac)) ⟩
+
+          (bd) +p ((shiftRight m (ad_plus_bc)) +p (shiftRight (2 *ℕ m) (ac)))
+
+        ≡⟨ cong (bd +p_) (+p-comm (shiftRight m (ad_plus_bc))  (shiftRight (2 *ℕ m) (ac))) ⟩
+
+           bd +p ((shiftRight (2 *ℕ m) (ac)) +p (shiftRight m (ad_plus_bc)))
+
+        ≡⟨ +p-comm bd  ((shiftRight (2 *ℕ m) (ac)) +p (shiftRight m (ad_plus_bc))) ⟩
+
+          (((shiftRight (2 *ℕ m) ac) +p (shiftRight m ad_plus_bc)) +p bd )
+        ∎
+
     where
     open Pair
     m = ((length xs / 2) ⊓ (length ys / 2))
