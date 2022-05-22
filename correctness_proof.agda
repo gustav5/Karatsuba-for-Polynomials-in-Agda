@@ -10,7 +10,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Level using (Level)
 open import Data.Nat.DivMod 
 open import Data.Empty using (⊥; ⊥-elim)
-open import libExjobb 
+open import library 
 
 
 
@@ -41,9 +41,9 @@ karatsuba xs ys = karatsuba' ((length xs) ⊔ (length ys)) xs ys
 
 -- Proof 
 module _ (assum : (m : ℕ)(a b c d : List ℤ) → ((shiftRight m ((a *p d) +p (b *p c)))+p (shiftRight (2 *ℕ m) (a *p c))) ≡  ((shiftRight m ((((a +p b) *p (c +p d)) -p (a *p c)) -p (b *p d))) +p (shiftRight (2 *ℕ m) (a *p c))))
-                    ( m/2>2⇒5<m : ∀ (m : ℕ) → 2 < m / 2 → 5 < m)
-                    (drop-lemma :  (xs ys : List ℤ) → 5 < (length xs) → 5 < (length ys) → 3 ≤ length (drop ((length xs / 2) ⊓  (length ys / 2)) xs))
-                    (drop-lemma-two :  (xs ys : List ℤ) → 5 < (length xs) → 5 < (length ys) → 3 ≤ length (drop ((length xs / 2) ⊓  (length ys / 2)) ys)) where   
+         ( m/2>2⇒5<m : ∀ (m : ℕ) → 2 < m / 2 → 5 < m)
+         (drop-lemma :  (xs ys : List ℤ) → 5 < (length xs) → 5 < (length ys) → 3 ≤ length (drop ((length xs / 2) ⊓  (length ys / 2)) xs))
+         (drop-lemma-two :  (xs ys : List ℤ) → 5 < (length xs) → 5 < (length ys) → 3 ≤ length (drop ((length xs / 2) ⊓  (length ys / 2)) ys)) where   
   ismul'' : ∀ (n : ℕ) (xs ys : List ℤ)
     → xs *p ys ≡ karatsuba' n xs ys
   ismul'' zero xs ys = refl
